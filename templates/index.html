@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TechStore — Tecnología Premium</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Bebas+Neue&family=Crimson+Pro:ital,wght@0,300;1,300;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+  <!-- CURSOR PERSONALIZADO -->
+  <div id="cursor"></div>
+  <div id="cursor-follower"></div>
+
+  <!-- CANVAS FONDO -->
+  <canvas id="bg-canvas"></canvas>
+
+  <!-- NOISE OVERLAY -->
+  <div class="noise"></div>
+
+  <!-- ── HEADER ── -->
+  <header id="header">
+    <a href="#" class="logo">
+      <span class="logo-tech">Tech</span><span class="logo-store">Store</span>
+      <span class="logo-dot"></span>
+    </a>
+    <nav>
+      <a href="#">Inicio</a>
+      <a href="#catalogo">Catálogo</a>
+      <a href="#">Ofertas</a>
+    </nav>
+    <a href="#" class="nav-cta">
+      <span>Contacto</span>
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+    </a>
+  </header>
+
+  <!-- ── HERO ── -->
+  <section class="hero">
+    <div class="hero-left">
+      <div class="hero-eyebrow">
+        <span class="eyebrow-line"></span>
+        <span>Colección 2026</span>
+      </div>
+
+      <h1 class="hero-title">
+        <span class="title-line line-1">Tecnología</span>
+        <span class="title-line line-2"><em>que te</em></span>
+        <span class="title-line line-3">define.</span>
+      </h1>
+
+      <p class="hero-desc">
+        Periféricos, audio y hardware premium. Calidad sin concesiones 
+        para quienes exigen más de su setup.
+      </p>
+
+      <div class="hero-ctas">
+        <a href="#catalogo" class="cta-main">
+          Explorar catálogo
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </a>
+        <button class="cta-chat" onclick="toggleChat()">
+          <span class="chat-pulse"></span>
+          IA activa
+        </button>
+      </div>
+    </div>
+
+    <div class="hero-right">
+      <!-- Producto destacado flotante -->
+      <div class="hero-card-featured" id="featured-card">
+        <div class="featured-img-wrap">
+          <img src="https://images.unsplash.com/photo-1546435770-a3e426bf472b?w=500&q=80" alt="Producto destacado" id="featured-img">
+          <div class="featured-img-glow"></div>
+        </div>
+        <div class="featured-info">
+          <span class="featured-tag">Más vendido</span>
+          <span class="featured-name" id="featured-name">Auriculares Sony</span>
+          <span class="featured-price" id="featured-price">S/ 450.00</span>
+        </div>
+      </div>
+
+      <!-- Stats flotantes -->
+      <div class="stat-pill s1">
+        <span class="stat-num" id="hero-count">—</span>
+        <span class="stat-label">Productos</span>
+      </div>
+      <div class="stat-pill s2">
+        <span class="stat-num">24/7</span>
+        <span class="stat-label">Soporte IA</span>
+      </div>
+      <div class="stat-pill s3">
+        <span class="stat-num">4.9★</span>
+        <span class="stat-label">Valoración</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── TICKER ── -->
+  <div class="ticker-wrap">
+    <div class="ticker-inner">
+      <div class="ticker-track">
+        <span>Envío gratis desde <strong>S/ 200</strong></span>
+        <span class="ticker-dot">✦</span>
+        <span>Garantía 12 meses</span>
+        <span class="ticker-dot">✦</span>
+        <span>Pago seguro</span>
+        <span class="ticker-dot">✦</span>
+        <span>Stock renovado semanal</span>
+        <span class="ticker-dot">✦</span>
+        <span>Tech Assistant <strong>24/7</strong></span>
+        <span class="ticker-dot">✦</span>
+        <span>Envío gratis desde <strong>S/ 200</strong></span>
+        <span class="ticker-dot">✦</span>
+        <span>Garantía 12 meses</span>
+        <span class="ticker-dot">✦</span>
+        <span>Pago seguro</span>
+        <span class="ticker-dot">✦</span>
+        <span>Stock renovado semanal</span>
+        <span class="ticker-dot">✦</span>
+        <span>Tech Assistant <strong>24/7</strong></span>
+        <span class="ticker-dot">✦</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── CATÁLOGO ── -->
+  <section class="catalog" id="catalogo">
+    <div class="catalog-header">
+      <div class="catalog-title-wrap">
+        <h2 class="catalog-title">Catálogo</h2>
+        <span class="catalog-subtitle">— Todo lo que necesita tu setup</span>
+      </div>
+      <div class="catalog-controls">
+        <span class="catalog-count" id="product-count">Cargando...</span>
+        <div class="filter-pills" id="filter-pills">
+          <button class="pill active" data-cat="Todos">Todos</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- BENTO GRID -->
+    <div class="bento-grid" id="productos-grid">
+      <div class="bento-loading">
+        <div class="loading-bar"></div>
+        <span>Cargando productos...</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── FOOTER ── -->
+  <footer>
+    <div class="footer-left">
+      <span class="footer-logo">Tech<span>Store</span></span>
+      <span class="footer-tagline">Tecnología que te define.</span>
+    </div>
+    <div class="footer-right">
+      <span>© 2026 TechStore</span>
+      <span class="footer-sep">·</span>
+      <span>Flask + Gemini AI</span>
+    </div>
+  </footer>
+
+  <!-- ── CHAT ── -->
+  <button id="chat-toggle-btn" onclick="toggleChat()" aria-label="Chat">
+    <svg id="chat-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+    <svg id="chat-close" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="display:none"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    <span class="chat-notif"></span>
+  </button>
+
+  <div id="chat-window">
+    <div class="chat-top">
+      <div class="chat-avatar">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
+      </div>
+      <div class="chat-top-info">
+        <span class="chat-top-name">Tech Assistant</span>
+        <span class="chat-top-status">
+          <span class="status-dot"></span>
+          Powered by Gemini AI
+        </span>
+      </div>
+      <button class="chat-x" onclick="toggleChat()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+
+    <div id="chat-box"></div>
+
+    <div class="chat-suggestions" id="chat-suggestions">
+      <button onclick="askSugg('¿Cuáles son los productos más vendidos?')">🔥 Más vendidos</button>
+      <button onclick="askSugg('¿Qué productos tienen mayor stock?')">📦 En stock</button>
+      <button onclick="askSugg('¿Cuál es el producto más económico?')">💰 Económicos</button>
+    </div>
+
+    <div class="chat-bottom">
+      <input type="text" id="pregunta" placeholder="Pregunta sobre precios, stock..." onkeypress="if(event.key==='Enter') enviar()">
+      <button class="send-btn" onclick="enviar()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <script>
+    // =========================================
+    // CANVAS BACKGROUND — PARTÍCULAS
+    // =========================================
+    const canvas = document.getElementById('bg-canvas');
+    const ctx = canvas.getContext('2d');
+    let W, H, particles = [];
+
+    function resize() {
+      W = canvas.width = window.innerWidth;
+      H = canvas.height = window.innerHeight;
+    }
+    resize();
+    window.addEventListener('resize', resize);
+
+    class Particle {
+      constructor() { this.reset(); }
+      reset() {
+        this.x = Math.random() * W;
+        this.y = Math.random() * H;
+        this.size = Math.random() * 1.5 + 0.3;
+        this.speedX = (Math.random() - 0.5) * 0.3;
+        this.speedY = (Math.random() - 0.5) * 0.3;
+        this.opacity = Math.random() * 0.5 + 0.1;
+        this.color = Math.random() > 0.7 ? '#c8ff00' : '#ffffff';
+      }
+      update() {
+        this.x += this.speedX;
+        this.y += this.speedY;
+        if (this.x < 0 || this.x > W || this.y < 0 || this.y > H) this.reset();
+      }
+      draw() {
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        ctx.fillStyle = this.color;
+        ctx.globalAlpha = this.opacity;
+        ctx.fill();
+      }
+    }
+
+    for (let i = 0; i < 120; i++) particles.push(new Particle());
+
+    // Líneas de conexión
+    function drawConnections() {
+      for (let i = 0; i < particles.length; i++) {
+        for (let j = i + 1; j < particles.length; j++) {
+          const dx = particles[i].x - particles[j].x;
+          const dy = particles[i].y - particles[j].y;
+          const dist = Math.sqrt(dx*dx + dy*dy);
+          if (dist < 100) {
+            ctx.beginPath();
+            ctx.moveTo(particles[i].x, particles[i].y);
+            ctx.lineTo(particles[j].x, particles[j].y);
+            ctx.strokeStyle = '#c8ff00';
+            ctx.globalAlpha = (1 - dist/100) * 0.08;
+            ctx.lineWidth = 0.5;
+            ctx.stroke();
+          }
+        }
+      }
+    }
+
+    function animBg() {
+      ctx.clearRect(0, 0, W, H);
+      particles.forEach(p => { p.update(); p.draw(); });
+      drawConnections();
+      ctx.globalAlpha = 1;
+      requestAnimationFrame(animBg);
+    }
+    animBg();
+
+    // =========================================
+    // CURSOR PERSONALIZADO
+    // =========================================
+    const cur = document.getElementById('cursor');
+    const curF = document.getElementById('cursor-follower');
+    let mx = 0, my = 0, fx = 0, fy = 0;
+
+    document.addEventListener('mousemove', e => {
+      mx = e.clientX; my = e.clientY;
+      cur.style.left = mx + 'px';
+      cur.style.top = my + 'px';
+    });
+
+    function animCursor() {
+      fx += (mx - fx) * 0.12;
+      fy += (my - fy) * 0.12;
+      curF.style.left = fx + 'px';
+      curF.style.top = fy + 'px';
+      requestAnimationFrame(animCursor);
+    }
+    animCursor();
+
+    document.querySelectorAll('a, button, .product-card, input').forEach(el => {
+      el.addEventListener('mouseenter', () => { cur.classList.add('hover'); curF.classList.add('hover'); });
+      el.addEventListener('mouseleave', () => { cur.classList.remove('hover'); curF.classList.remove('hover'); });
+    });
+
+    // =========================================
+    // HEADER SCROLL
+    // =========================================
+    window.addEventListener('scroll', () => {
+      document.getElementById('header').classList.toggle('scrolled', window.scrollY > 50);
+    });
+
+    // =========================================
+    // INTERSECTION OBSERVER — ANIMACIONES
+    // =========================================
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+    }, { threshold: 0.1 });
+
+    // =========================================
+    // DATOS Y CATÁLOGO
+    // =========================================
+    let allProducts = [];
+    let activeFilter = 'Todos';
+
+    async function cargarProductos() {
+      try {
+        const res = await fetch('/api/productos');
+        allProducts = await res.json();
+
+        document.getElementById('hero-count').textContent = allProducts.length;
+        document.getElementById('product-count').textContent = `${allProducts.length} artículos`;
+
+        // Producto destacado = el más vendido
+        if (allProducts.length > 0) {
+          const top = allProducts[0];
+          document.getElementById('featured-name').textContent = top.nom_pro;
+          document.getElementById('featured-price').textContent = `S/ ${Number(top.pre_pro).toFixed(2)}`;
+          if (top.img_url) document.getElementById('featured-img').src = top.img_url;
+        }
+
+        // Filtros por categoría
+        const cats = [...new Set(allProducts.map(p => p.categoria).filter(Boolean))];
+        const pillsCont = document.getElementById('filter-pills');
+        cats.forEach(cat => {
+          const btn = document.createElement('button');
+          btn.className = 'pill';
+          btn.dataset.cat = cat;
+          btn.textContent = cat;
+          btn.onclick = () => setFilter(cat);
+          pillsCont.appendChild(btn);
+        });
+        document.querySelector('.pill[data-cat="Todos"]').onclick = () => setFilter('Todos');
+
+        renderGrid(allProducts);
+
+      } catch (err) {
+        document.getElementById('productos-grid').innerHTML = '<p style="color:#666;padding:40px">Error al cargar productos</p>';
+        console.error(err);
+      }
+    }
+
+    function setFilter(cat) {
+      activeFilter = cat;
+      document.querySelectorAll('.pill').forEach(p => p.classList.toggle('active', p.dataset.cat === cat));
+      const filtered = cat === 'Todos' ? allProducts : allProducts.filter(p => p.categoria === cat);
+      renderGrid(filtered);
+    }
+
+    function renderGrid(products) {
+      const grid = document.getElementById('productos-grid');
+      grid.innerHTML = '';
+
+      products.forEach((p, i) => {
+        const card = document.createElement('div');
+        card.className = 'bento-card';
+        card.dataset.index = i;
+
+        // Tamaños variables para el bento
+        const sizes = ['', 'wide', 'tall', '', 'wide', '', 'tall', '', ''];
+        const size = sizes[i % sizes.length] || '';
+        if (size) card.classList.add(size);
+
+        const stockClass = p.stk_pro > 20 ? 'stock-ok' : p.stk_pro > 5 ? 'stock-low' : 'stock-critical';
+        const stockLabel = p.stk_pro > 20 ? 'En stock' : p.stk_pro > 5 ? 'Pocas unidades' : '¡Últimas!';
+
+        card.innerHTML = `
+          <div class="card-img-wrap">
+            <img 
+              src="${p.img_url || 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=600&q=80'}" 
+              alt="${p.nom_pro}"
+              loading="lazy"
+              onerror="this.src='https://images.unsplash.com/photo-1518770660439-4636190af475?w=600&q=80'"
+            >
+            <div class="card-img-overlay"></div>
+            <span class="card-cat-badge">${p.categoria || 'Tech'}</span>
+            <span class="card-ventas-badge">🔥 ${p.ventas}</span>
+          </div>
+          <div class="card-content">
+            <div class="card-content-top">
+              <h3 class="card-name">${p.nom_pro}</h3>
+              <div class="card-price-wrap">
+                <span class="card-price">S/ ${Number(p.pre_pro).toFixed(2)}</span>
+              </div>
+            </div>
+            <div class="card-content-bottom">
+              <span class="card-stock ${stockClass}">
+                <span class="stock-dot"></span>
+                ${stockLabel} · ${p.stk_pro} uds.
+              </span>
+              <button class="card-btn" onclick="askSugg('Cuéntame más sobre ${p.nom_pro}')">
+                Ver más
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+              </button>
+            </div>
+          </div>
+        `;
+
+        grid.appendChild(card);
+        observer.observe(card);
+
+        // Stagger de entrada
+        card.style.animationDelay = `${i * 60}ms`;
+      });
+    }
+
+    // =========================================
+    // CHAT
+    // =========================================
+    let chatOpen = false;
+
+    function toggleChat() {
+      chatOpen = !chatOpen;
+      const win = document.getElementById('chat-window');
+      const icon = document.getElementById('chat-icon');
+      const close = document.getElementById('chat-close');
+      const notif = document.querySelector('.chat-notif');
+
+      win.classList.toggle('open', chatOpen);
+      icon.style.display = chatOpen ? 'none' : 'block';
+      close.style.display = chatOpen ? 'block' : 'none';
+      notif.style.display = 'none';
+
+      if (chatOpen) {
+        document.getElementById('pregunta').focus();
+        if (document.getElementById('chat-box').children.length === 0) {
+          agregarMsg('¡Hola! Soy tu asistente de TechStore 👋 Puedo ayudarte con precios, stock y recomendaciones. ¿En qué te puedo ayudar?', 'bot');
+        }
+      }
+    }
+
+    function askSugg(texto) {
+      if (!chatOpen) toggleChat();
+      document.getElementById('pregunta').value = texto;
+      document.getElementById('chat-suggestions').style.display = 'none';
+      enviar();
+    }
+
+    async function enviar() {
+      const input = document.getElementById('pregunta');
+      const texto = input.value.trim();
+      if (!texto) return;
+
+      agregarMsg(texto, 'user');
+      input.value = '';
+
+      const loadId = 'load-' + Date.now();
+      agregarMsg('', 'bot', loadId, true);
+
+      try {
+        const res = await fetch('/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ pregunta: texto })
+        });
+        const data = await res.json();
+        const el = document.getElementById(loadId);
+        el.classList.remove('typing');
+        el.innerHTML = mdToHtml(data.respuesta);
+      } catch {
+        document.getElementById(loadId).textContent = 'No pude conectarme con el servidor.';
+      }
+
+      const box = document.getElementById('chat-box');
+      box.scrollTop = box.scrollHeight;
+    }
+
+    // Parser markdown → HTML para respuestas del bot
+    function mdToHtml(text) {
+      let html = text
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\*(.+?)\*/g, '<em>$1</em>');
+
+      // Listas con guión o asterisco al inicio de línea
+      const lines = html.split('\n');
+      let result = [];
+      let inList = false;
+
+      for (let line of lines) {
+        const listMatch = line.match(/^[\-\*•]\s+(.+)$/);
+        const numMatch = line.match(/^\d+\.\s+(.+)$/);
+        if (listMatch || numMatch) {
+          if (!inList) { result.push('<ul class="chat-list">'); inList = true; }
+          result.push(`<li>${(listMatch || numMatch)[1]}</li>`);
+        } else {
+          if (inList) { result.push('</ul>'); inList = false; }
+          if (line.trim()) result.push(`<p>${line}</p>`);
+          else result.push('<br>');
+        }
+      }
+      if (inList) result.push('</ul>');
+      return result.join('');
+    }
+
+    function agregarMsg(texto, tipo, id = null, typing = false) {
+      const box = document.getElementById('chat-box');
+      const div = document.createElement('div');
+      div.className = `msg ${tipo}${typing ? ' typing' : ''}`;
+      if (typing) {
+        div.innerHTML = '<span></span><span></span><span></span>';
+      } else {
+        div.innerHTML = tipo === 'bot' ? mdToHtml(texto) : `<p>${texto}</p>`;
+      }
+      if (id) div.id = id;
+      box.appendChild(div);
+      box.scrollTop = box.scrollHeight;
+    }
+
+    cargarProductos();
+  </script>
+</body>
+</html>
