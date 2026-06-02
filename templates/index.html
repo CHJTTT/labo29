@@ -7,6 +7,144 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Bebas+Neue&family=Crimson+Pro:ital,wght@0,300;1,300;1,400&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
+  <style>
+    /* ── MENÚ DE USUARIO ── */
+    .user-menu {
+      position: relative;
+    }
+
+    .user-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(108, 99, 255, 0.12);
+      border: 1px solid rgba(108, 99, 255, 0.3);
+      border-radius: 99px;
+      padding: 7px 16px 7px 10px;
+      color: #f0f0f8;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+
+    .user-btn:hover {
+      background: rgba(108, 99, 255, 0.22);
+      border-color: rgba(108, 99, 255, 0.55);
+    }
+
+    .user-avatar {
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #6c63ff, #ff6584);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 700;
+      color: #fff;
+      flex-shrink: 0;
+    }
+
+    .user-chevron {
+      transition: transform 0.2s;
+    }
+
+    .user-menu.open .user-chevron {
+      transform: rotate(180deg);
+    }
+
+    .user-dropdown {
+      position: absolute;
+      top: calc(100% + 10px);
+      right: 0;
+      background: #111118;
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 14px;
+      padding: 6px;
+      min-width: 180px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+      opacity: 0;
+      transform: translateY(-8px);
+      pointer-events: none;
+      transition: all 0.18s ease;
+      z-index: 999;
+    }
+
+    .user-menu.open .user-dropdown {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+
+    .dropdown-name {
+      padding: 8px 12px 4px;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: #44445a;
+    }
+
+    .dropdown-link {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 9px 12px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      color: #a0a0c0;
+      text-decoration: none;
+      cursor: pointer;
+      transition: all 0.15s;
+      border: none;
+      background: none;
+      width: 100%;
+      font-family: 'Space Grotesk', sans-serif;
+    }
+
+    .dropdown-link:hover {
+      background: rgba(255,255,255,0.06);
+      color: #f0f0f8;
+    }
+
+    .dropdown-link.admin {
+      color: #6c63ff;
+    }
+
+    .dropdown-link.admin:hover {
+      background: rgba(108,99,255,0.12);
+      color: #8880ff;
+    }
+
+    .dropdown-sep {
+      height: 1px;
+      background: rgba(255,255,255,0.07);
+      margin: 4px 0;
+    }
+
+    .dropdown-link.logout {
+      color: #ef4444;
+    }
+
+    .dropdown-link.logout:hover {
+      background: rgba(239,68,68,0.1);
+      color: #f87171;
+    }
+
+    /* Botón iniciar sesión (cuando no hay sesión) */
+    .nav-cta {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      text-decoration: none;
+    }
+  </style>
 </head>
 <body>
 
@@ -31,10 +169,9 @@
       <a href="#catalogo">Catálogo</a>
       <a href="#">Ofertas</a>
     </nav>
-    <a href="#" class="nav-cta">
-      <span>Contacto</span>
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-    </a>
+
+    <!-- ZONA DE USUARIO — se rellena con JS según sesión -->
+    <div id="header-user"></div>
   </header>
 
   <!-- ── HERO ── -->
@@ -205,121 +342,88 @@
 
   <script>
     // =========================================
-    // CANVAS BACKGROUND — PARTÍCULAS
+    // SESIÓN DE USUARIO — HEADER
     // =========================================
-    const canvas = document.getElementById('bg-canvas');
-    const ctx = canvas.getContext('2d');
-    let W, H, particles = [];
+    async function cargarSesion() {
+      try {
+        const res  = await fetch('/api/sesion');
+        const data = await res.json();
+        const cont = document.getElementById('header-user');
 
-    function resize() {
-      W = canvas.width = window.innerWidth;
-      H = canvas.height = window.innerHeight;
-    }
-    resize();
-    window.addEventListener('resize', resize);
+        if (data.logueado) {
+          // Inicial del nombre para el avatar
+          const inicial = data.nombre.charAt(0).toUpperCase();
 
-    class Particle {
-      constructor() { this.reset(); }
-      reset() {
-        this.x = Math.random() * W;
-        this.y = Math.random() * H;
-        this.size = Math.random() * 1.5 + 0.3;
-        this.speedX = (Math.random() - 0.5) * 0.3;
-        this.speedY = (Math.random() - 0.5) * 0.3;
-        this.opacity = Math.random() * 0.5 + 0.1;
-        this.color = Math.random() > 0.7 ? '#c8ff00' : '#ffffff';
-      }
-      update() {
-        this.x += this.speedX;
-        this.y += this.speedY;
-        if (this.x < 0 || this.x > W || this.y < 0 || this.y > H) this.reset();
-      }
-      draw() {
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-        ctx.fillStyle = this.color;
-        ctx.globalAlpha = this.opacity;
-        ctx.fill();
-      }
-    }
-
-    for (let i = 0; i < 120; i++) particles.push(new Particle());
-
-    // Líneas de conexión
-    function drawConnections() {
-      for (let i = 0; i < particles.length; i++) {
-        for (let j = i + 1; j < particles.length; j++) {
-          const dx = particles[i].x - particles[j].x;
-          const dy = particles[i].y - particles[j].y;
-          const dist = Math.sqrt(dx*dx + dy*dy);
-          if (dist < 100) {
-            ctx.beginPath();
-            ctx.moveTo(particles[i].x, particles[i].y);
-            ctx.lineTo(particles[j].x, particles[j].y);
-            ctx.strokeStyle = '#c8ff00';
-            ctx.globalAlpha = (1 - dist/100) * 0.08;
-            ctx.lineWidth = 0.5;
-            ctx.stroke();
-          }
+          cont.innerHTML = `
+            <div class="user-menu" id="user-menu">
+              <button class="user-btn" onclick="toggleMenu()">
+                <div class="user-avatar">${inicial}</div>
+                <span>${data.nombre.split(' ')[0]}</span>
+                <svg class="user-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <polyline points="6 9 12 15 18 9"/>
+                </svg>
+              </button>
+              <div class="user-dropdown">
+                <div class="dropdown-name">${data.nombre}</div>
+                ${data.rol === 'admin' ? `
+                <a class="dropdown-link admin" href="/admin">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+                  Panel Admin
+                </a>` : ''}
+                <div class="dropdown-sep"></div>
+                <a class="dropdown-link logout" href="/logout">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                  Cerrar sesión
+                </a>
+              </div>
+            </div>
+          `;
+        } else {
+          // No logueado → botón de iniciar sesión
+          cont.innerHTML = `
+            <a href="/login" class="nav-cta">
+              <span>Iniciar sesión</span>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </a>
+          `;
         }
+      } catch (e) {
+        // Si falla silenciosamente, mostramos el botón de login
+        document.getElementById('header-user').innerHTML = `
+          <a href="/login" class="nav-cta">
+            <span>Iniciar sesión</span>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </a>
+        `;
       }
     }
 
-    function animBg() {
-      ctx.clearRect(0, 0, W, H);
-      particles.forEach(p => { p.update(); p.draw(); });
-      drawConnections();
-      ctx.globalAlpha = 1;
-      requestAnimationFrame(animBg);
+    function toggleMenu() {
+      document.getElementById('user-menu').classList.toggle('open');
     }
-    animBg();
 
-    // =========================================
-    // CURSOR PERSONALIZADO
-    // =========================================
-    const cur = document.getElementById('cursor');
-    const curF = document.getElementById('cursor-follower');
-    let mx = 0, my = 0, fx = 0, fy = 0;
-
-    document.addEventListener('mousemove', e => {
-      mx = e.clientX; my = e.clientY;
-      cur.style.left = mx + 'px';
-      cur.style.top = my + 'px';
-    });
-
-    function animCursor() {
-      fx += (mx - fx) * 0.12;
-      fy += (my - fy) * 0.12;
-      curF.style.left = fx + 'px';
-      curF.style.top = fy + 'px';
-      requestAnimationFrame(animCursor);
-    }
-    animCursor();
-
-    document.querySelectorAll('a, button, .product-card, input').forEach(el => {
-      el.addEventListener('mouseenter', () => { cur.classList.add('hover'); curF.classList.add('hover'); });
-      el.addEventListener('mouseleave', () => { cur.classList.remove('hover'); curF.classList.remove('hover'); });
+    // Cerrar menú al hacer clic fuera
+    document.addEventListener('click', e => {
+      const menu = document.getElementById('user-menu');
+      if (menu && !menu.contains(e.target)) {
+        menu.classList.remove('open');
+      }
     });
 
     // =========================================
-    // HEADER SCROLL
-    // =========================================
-    window.addEventListener('scroll', () => {
-      document.getElementById('header').classList.toggle('scrolled', window.scrollY > 50);
-    });
-
-    // =========================================
-    // INTERSECTION OBSERVER — ANIMACIONES
-    // =========================================
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
-    }, { threshold: 0.1 });
-
-    // =========================================
-    // DATOS Y CATÁLOGO
+    // PRODUCTOS
     // =========================================
     let allProducts = [];
     let activeFilter = 'Todos';
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.08 });
 
     async function cargarProductos() {
       try {
@@ -382,6 +486,16 @@
         const stockClass = p.stk_pro > 20 ? 'stock-ok' : p.stk_pro > 5 ? 'stock-low' : 'stock-critical';
         const stockLabel = p.stk_pro > 20 ? 'En stock' : p.stk_pro > 5 ? 'Pocas unidades' : '¡Últimas!';
 
+        // Badge de oferta
+        const ofertaBadge = p.oferta && p.pre_oferta
+          ? `<span class="card-oferta-badge">🔖 OFERTA</span>`
+          : '';
+
+        const precioHtml = p.oferta && p.pre_oferta
+          ? `<span class="card-price oferta">S/ ${Number(p.pre_oferta).toFixed(2)}</span>
+             <span class="card-price-original">S/ ${Number(p.pre_pro).toFixed(2)}</span>`
+          : `<span class="card-price">S/ ${Number(p.pre_pro).toFixed(2)}</span>`;
+
         card.innerHTML = `
           <div class="card-img-wrap">
             <img 
@@ -393,12 +507,13 @@
             <div class="card-img-overlay"></div>
             <span class="card-cat-badge">${p.categoria || 'Tech'}</span>
             <span class="card-ventas-badge">🔥 ${p.ventas}</span>
+            ${ofertaBadge}
           </div>
           <div class="card-content">
             <div class="card-content-top">
               <h3 class="card-name">${p.nom_pro}</h3>
               <div class="card-price-wrap">
-                <span class="card-price">S/ ${Number(p.pre_pro).toFixed(2)}</span>
+                ${precioHtml}
               </div>
             </div>
             <div class="card-content-bottom">
@@ -483,14 +598,12 @@
       box.scrollTop = box.scrollHeight;
     }
 
-    // Parser markdown → HTML para respuestas del bot
     function mdToHtml(text) {
       let html = text
         .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
         .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
         .replace(/\*(.+?)\*/g, '<em>$1</em>');
 
-      // Listas con guión o asterisco al inicio de línea
       const lines = html.split('\n');
       let result = [];
       let inList = false;
@@ -525,6 +638,10 @@
       box.scrollTop = box.scrollHeight;
     }
 
+    // =========================================
+    // INIT
+    // =========================================
+    cargarSesion();
     cargarProductos();
   </script>
 </body>
