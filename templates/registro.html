@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TechStore — Crear cuenta</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Bebas+Neue&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #08080f;
+      --surface: #111118;
+      --surface2: #1a1a26;
+      --border: #ffffff0f;
+      --accent: #6c63ff;
+      --accent-glow: #6c63ff35;
+      --text: #f0f0f8;
+      --text-2: #8888aa;
+      --text-3: #44445a;
+      --danger: #ef4444;
+      --ok: #22c55e;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Space Grotesk', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      top: -200px; left: 50%;
+      transform: translateX(-50%);
+      width: 700px; height: 700px;
+      background: radial-gradient(circle, #6c63ff18 0%, transparent 65%);
+      pointer-events: none;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 48px 44px;
+      width: 100%;
+      max-width: 420px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .logo {
+      text-align: center;
+      margin-bottom: 36px;
+    }
+
+    .logo a {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 34px;
+      letter-spacing: 2px;
+      color: var(--text);
+      text-decoration: none;
+    }
+
+    .logo a span { color: var(--accent); }
+
+    .logo-sub {
+      display: block;
+      font-size: 12px;
+      color: var(--text-3);
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      margin-top: 2px;
+    }
+
+    h1 {
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 6px;
+      text-align: center;
+    }
+
+    .subtitle {
+      text-align: center;
+      font-size: 14px;
+      color: var(--text-2);
+      margin-bottom: 32px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-bottom: 16px;
+    }
+
+    label {
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      color: var(--text-2);
+    }
+
+    input {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 16px;
+      color: var(--text);
+      font-size: 15px;
+      font-family: 'Space Grotesk', sans-serif;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      width: 100%;
+    }
+
+    input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-glow);
+    }
+
+    input::placeholder { color: var(--text-3); }
+
+    /* PIN */
+    .pin-wrap {
+      display: flex;
+      gap: 10px;
+    }
+
+    .pin-digit {
+      flex: 1;
+      text-align: center;
+      font-size: 22px;
+      font-weight: 700;
+      padding: 12px 0;
+      border-radius: 10px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      -moz-appearance: textfield;
+    }
+
+    .pin-digit::-webkit-outer-spin-button,
+    .pin-digit::-webkit-inner-spin-button { -webkit-appearance: none; }
+
+    .pin-digit:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-glow);
+    }
+
+    .pin-hint {
+      font-size: 11px;
+      color: var(--text-3);
+      margin-top: 4px;
+    }
+
+    .btn {
+      width: 100%;
+      padding: 14px;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: 700;
+      font-family: 'Space Grotesk', sans-serif;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-top: 8px;
+    }
+
+    .btn:hover {
+      background: #7c73ff;
+      box-shadow: 0 4px 24px var(--accent-glow);
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .error-msg {
+      background: #ef444418;
+      border: 1px solid #ef444440;
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 13px;
+      color: var(--danger);
+      margin-top: 12px;
+      display: none;
+      text-align: center;
+    }
+
+    .error-msg.show { display: block; }
+
+    .divider {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 24px 0 20px;
+    }
+
+    .divider::before,
+    .divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    .divider span {
+      font-size: 12px;
+      color: var(--text-3);
+    }
+
+    .link-row {
+      text-align: center;
+      font-size: 14px;
+      color: var(--text-2);
+    }
+
+    .link-row a {
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .link-row a:hover { text-decoration: underline; }
+
+    .back-link {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      margin-top: 20px;
+      font-size: 13px;
+      color: var(--text-3);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+
+    .back-link:hover { color: var(--text-2); }
+  </style>
+</head>
+<body>
+
+  <div class="card">
+    <div class="logo">
+      <a href="/"><span>Tech</span>Store</a>
+      <span class="logo-sub">Crear cuenta</span>
+    </div>
+
+    <h1>Únete a TechStore</h1>
+    <p class="subtitle">Crea tu cuenta en segundos</p>
+
+    <div class="form-group">
+      <label>Nombre completo</label>
+      <input type="text" id="nombre" placeholder="Tu nombre" autocomplete="name">
+    </div>
+
+    <div class="form-group">
+      <label>Correo electrónico</label>
+      <input type="email" id="correo" placeholder="correo@ejemplo.com" autocomplete="email">
+    </div>
+
+    <div class="form-group">
+      <label>PIN de 4 dígitos</label>
+      <div class="pin-wrap">
+        <input class="pin-digit" type="number" maxlength="1" min="0" max="9" id="p1" oninput="avanzarPin(this, 'p2')" onkeydown="retrocederPin(event, null, 'p1')">
+        <input class="pin-digit" type="number" maxlength="1" min="0" max="9" id="p2" oninput="avanzarPin(this, 'p3')" onkeydown="retrocederPin(event, 'p1', 'p2')">
+        <input class="pin-digit" type="number" maxlength="1" min="0" max="9" id="p3" oninput="avanzarPin(this, 'p4')" onkeydown="retrocederPin(event, 'p2', 'p3')">
+        <input class="pin-digit" type="number" maxlength="1" min="0" max="9" id="p4" oninput="avanzarPin(this, null)" onkeydown="retrocederPin(event, 'p3', 'p4')">
+      </div>
+      <span class="pin-hint">⚠️ Guarda tu PIN, no se puede recuperar</span>
+    </div>
+
+    <button class="btn" id="btn-reg" onclick="hacerRegistro()">Crear cuenta</button>
+
+    <div class="error-msg" id="error-msg"></div>
+
+    <div class="divider"><span>¿Ya tienes cuenta?</span></div>
+
+    <div class="link-row">
+      <a href="/login">Iniciar sesión</a>
+    </div>
+
+    <a class="back-link" href="/">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+      Volver a la tienda
+    </a>
+  </div>
+
+  <script>
+    function avanzarPin(el, siguienteId) {
+      const val = el.value.toString();
+      if (val.length > 1) el.value = val.slice(-1);
+      if (el.value && siguienteId) document.getElementById(siguienteId).focus();
+    }
+
+    function retrocederPin(e, anteriorId, actualId) {
+      const el = document.getElementById(actualId);
+      if (e.key === 'Backspace' && !el.value && anteriorId) {
+        document.getElementById(anteriorId).focus();
+      }
+      if (e.key === 'Enter') hacerRegistro();
+    }
+
+    function getPin() {
+      return ['p1','p2','p3','p4'].map(id => document.getElementById(id).value).join('');
+    }
+
+    function mostrarError(msg) {
+      const el = document.getElementById('error-msg');
+      el.textContent = msg;
+      el.classList.add('show');
+    }
+
+    function ocultarError() {
+      document.getElementById('error-msg').classList.remove('show');
+    }
+
+    async function hacerRegistro() {
+      ocultarError();
+      const nombre = document.getElementById('nombre').value.trim();
+      const correo = document.getElementById('correo').value.trim();
+      const pin    = getPin();
+
+      if (!nombre) { mostrarError('Ingresa tu nombre'); return; }
+      if (!correo) { mostrarError('Ingresa tu correo'); return; }
+      if (pin.length !== 4) { mostrarError('Ingresa los 4 dígitos del PIN'); return; }
+
+      const btn = document.getElementById('btn-reg');
+      btn.disabled = true;
+      btn.textContent = 'Creando cuenta...';
+
+      try {
+        const res  = await fetch('/api/registro', {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body:    JSON.stringify({ nombre, correo, pin })
+        });
+        const data = await res.json();
+
+        if (data.ok) {
+          btn.textContent = `✓ ¡Bienvenido, ${data.nombre}!`;
+          setTimeout(() => { window.location.href = '/'; }, 700);
+        } else {
+          mostrarError(data.error || 'Error al crear la cuenta');
+          btn.disabled = false;
+          btn.textContent = 'Crear cuenta';
+        }
+      } catch {
+        mostrarError('Error de conexión');
+        btn.disabled = false;
+        btn.textContent = 'Crear cuenta';
+      }
+    }
+  </script>
+</body>
+</html>

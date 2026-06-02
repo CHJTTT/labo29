@@ -1,5 +1,7 @@
-flask
-google-genai
-psycopg2-binary
-gunicorn
-python-dotenv
+
+flask==3.1.0
+google-genai==1.16.0
+psycopg2-binary==2.9.10
+cloudinary==1.44.2
+python-dotenv==1.0.1
+gunicorn==20.1.0

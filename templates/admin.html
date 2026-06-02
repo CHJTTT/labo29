@@ -1,0 +1,1258 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TechStore — Panel Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Bebas+Neue&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0a0a0f;
+      --surface: #111118;
+      --surface2: #1a1a24;
+      --border: #ffffff12;
+      --border-hover: #ffffff25;
+      --accent: #6c63ff;
+      --accent2: #ff6584;
+      --accent-glow: #6c63ff40;
+      --text: #f0f0f8;
+      --text-2: #8888aa;
+      --text-3: #555570;
+      --ok: #22c55e;
+      --warn: #f59e0b;
+      --danger: #ef4444;
+      --radius: 12px;
+      --radius-lg: 20px;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Space Grotesk', sans-serif;
+      min-height: 100vh;
+      display: flex;
+    }
+
+    /* ── SIDEBAR ── */
+    .sidebar {
+      width: 240px;
+      min-height: 100vh;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      padding: 28px 0;
+      position: fixed;
+      top: 0; left: 0;
+      z-index: 100;
+    }
+
+    .sidebar-logo {
+      padding: 0 24px 28px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 20px;
+    }
+
+    .sidebar-logo a {
+      text-decoration: none;
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 26px;
+      letter-spacing: 1px;
+      color: var(--text);
+    }
+
+    .sidebar-logo a span { color: var(--accent); }
+
+    .sidebar-label {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--text-3);
+      padding: 0 24px;
+      margin-bottom: 8px;
+    }
+
+    .sidebar-link {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 24px;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-2);
+      text-decoration: none;
+      transition: all 0.2s;
+      border-left: 2px solid transparent;
+    }
+
+    .sidebar-link:hover,
+    .sidebar-link.active {
+      color: var(--text);
+      background: var(--surface2);
+      border-left-color: var(--accent);
+    }
+
+    .sidebar-link svg { opacity: 0.6; }
+    .sidebar-link:hover svg,
+    .sidebar-link.active svg { opacity: 1; }
+
+    .sidebar-footer {
+      margin-top: auto;
+      padding: 20px 24px 0;
+      border-top: 1px solid var(--border);
+    }
+
+    .sidebar-footer a {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--text-2);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+
+    .sidebar-footer a:hover { color: var(--text); }
+
+    /* ── MAIN ── */
+    .main {
+      margin-left: 240px;
+      flex: 1;
+      padding: 40px;
+      max-width: calc(100vw - 240px);
+    }
+
+    .page-header {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      margin-bottom: 36px;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .page-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 42px;
+      letter-spacing: 1px;
+      line-height: 1;
+    }
+
+    .page-title span { color: var(--accent); }
+
+    .page-sub {
+      color: var(--text-2);
+      font-size: 14px;
+      margin-top: 4px;
+    }
+
+    /* ── STATS BAR ── */
+    .stats-bar {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px 24px;
+      transition: border-color 0.2s;
+    }
+
+    .stat-card:hover { border-color: var(--border-hover); }
+
+    .stat-card-label {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--text-3);
+      margin-bottom: 8px;
+    }
+
+    .stat-card-value {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .stat-card-value.accent { color: var(--accent); }
+    .stat-card-value.ok { color: var(--ok); }
+    .stat-card-value.warn { color: var(--warn); }
+
+    /* ── TOOLBAR ── */
+    .toolbar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+    }
+
+    .search-wrap {
+      flex: 1;
+      min-width: 200px;
+      position: relative;
+    }
+
+    .search-wrap svg {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-3);
+      pointer-events: none;
+    }
+
+    .search-wrap input {
+      width: 100%;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 14px 10px 40px;
+      color: var(--text);
+      font-size: 14px;
+      font-family: 'Space Grotesk', sans-serif;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .search-wrap input:focus { border-color: var(--accent); }
+    .search-wrap input::placeholder { color: var(--text-3); }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 10px 18px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      font-family: 'Space Grotesk', sans-serif;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .btn-primary:hover {
+      background: #7c73ff;
+      box-shadow: 0 0 20px var(--accent-glow);
+    }
+
+    .btn-outline {
+      background: transparent;
+      color: var(--text-2);
+      border: 1px solid var(--border);
+    }
+
+    .btn-outline:hover {
+      border-color: var(--border-hover);
+      color: var(--text);
+    }
+
+    .btn-danger {
+      background: transparent;
+      color: var(--danger);
+      border: 1px solid #ef444430;
+    }
+
+    .btn-danger:hover {
+      background: #ef444415;
+    }
+
+    .btn-sm {
+      padding: 6px 12px;
+      font-size: 12px;
+    }
+
+    /* ── TABLE ── */
+    .table-wrap {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    thead tr {
+      background: var(--surface2);
+      border-bottom: 1px solid var(--border);
+    }
+
+    th {
+      padding: 12px 16px;
+      text-align: left;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--text-3);
+      white-space: nowrap;
+    }
+
+    tbody tr {
+      border-bottom: 1px solid var(--border);
+      transition: background 0.15s;
+    }
+
+    tbody tr:last-child { border-bottom: none; }
+
+    tbody tr:hover { background: var(--surface2); }
+
+    td {
+      padding: 14px 16px;
+      font-size: 14px;
+      color: var(--text);
+      vertical-align: middle;
+    }
+
+    .td-img {
+      width: 52px;
+      height: 44px;
+      object-fit: cover;
+      border-radius: 8px;
+      background: var(--surface2);
+    }
+
+    .td-name { font-weight: 600; max-width: 200px; }
+
+    .td-price { font-weight: 700; color: var(--accent); }
+
+    .cat-badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text-2);
+    }
+
+    .stock-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .stock-badge::before {
+      content: '';
+      display: block;
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+    }
+
+    .stock-ok { color: var(--ok); }
+    .stock-ok::before { background: var(--ok); box-shadow: 0 0 6px var(--ok); }
+    .stock-warn { color: var(--warn); }
+    .stock-warn::before { background: var(--warn); }
+    .stock-crit { color: var(--danger); }
+    .stock-crit::before { background: var(--danger); }
+
+    .actions-cell {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    /* ── LOADING / EMPTY ── */
+    .table-placeholder {
+      padding: 60px;
+      text-align: center;
+      color: var(--text-3);
+      font-size: 14px;
+    }
+
+    .spinner {
+      width: 28px;
+      height: 28px;
+      border: 3px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      margin: 0 auto 12px;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── MODAL ── */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: #00000099;
+      backdrop-filter: blur(6px);
+      z-index: 200;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .modal-overlay.open { display: flex; }
+
+    .modal {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      width: 100%;
+      max-width: 560px;
+      animation: modalIn 0.25s ease;
+    }
+
+    @keyframes modalIn {
+      from { opacity: 0; transform: translateY(20px) scale(0.97); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .modal-head {
+      padding: 24px 28px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .modal-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 24px;
+      letter-spacing: 1px;
+    }
+
+    .modal-close {
+      background: none;
+      border: none;
+      color: var(--text-3);
+      cursor: pointer;
+      padding: 4px;
+      border-radius: 6px;
+      transition: color 0.2s;
+    }
+
+    .modal-close:hover { color: var(--text); }
+
+    .modal-body {
+      padding: 28px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .form-group label {
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      color: var(--text-2);
+    }
+
+    .form-group input,
+    .form-group select {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 14px;
+      color: var(--text);
+      font-size: 14px;
+      font-family: 'Space Grotesk', sans-serif;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus { border-color: var(--accent); }
+
+    .form-group input::placeholder { color: var(--text-3); }
+
+    .form-group select option { background: var(--surface2); }
+
+    /* ── IMAGE UPLOADER ── */
+    .img-uploader {
+      border: 2px dashed var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      position: relative;
+    }
+
+    .img-uploader:hover,
+    .img-uploader.drag-over {
+      border-color: var(--accent);
+      background: var(--accent-glow);
+    }
+
+    .img-uploader input[type="file"] {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+      width: 100%;
+    }
+
+    .img-uploader-icon {
+      font-size: 28px;
+      margin-bottom: 8px;
+    }
+
+    .img-uploader p {
+      font-size: 13px;
+      color: var(--text-2);
+    }
+
+    .img-uploader strong {
+      color: var(--accent);
+    }
+
+    .img-preview-wrap {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 10px 14px;
+    }
+
+    .img-preview-thumb {
+      width: 52px;
+      height: 44px;
+      object-fit: cover;
+      border-radius: 6px;
+      background: var(--bg);
+    }
+
+    .img-preview-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .img-preview-name {
+      font-size: 13px;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .img-preview-status {
+      font-size: 11px;
+      color: var(--text-3);
+      margin-top: 2px;
+    }
+
+    .img-preview-status.uploading { color: var(--accent); }
+    .img-preview-status.done { color: var(--ok); }
+    .img-preview-status.error { color: var(--danger); }
+
+    .url-display {
+      font-size: 11px;
+      color: var(--text-3);
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 6px 10px;
+      word-break: break-all;
+      font-family: monospace;
+      margin-top: 4px;
+    }
+
+    .modal-foot {
+      padding: 20px 28px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+
+    /* ── CONFIRM MODAL ── */
+    .confirm-modal {
+      max-width: 400px;
+    }
+
+    /* ── TOAST ── */
+    #toast {
+      position: fixed;
+      bottom: 28px;
+      right: 28px;
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      pointer-events: none;
+    }
+
+    .toast-item {
+      padding: 12px 18px;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 500;
+      box-shadow: 0 8px 32px #00000060;
+      animation: toastIn 0.3s ease;
+      pointer-events: auto;
+    }
+
+    @keyframes toastIn {
+      from { opacity: 0; transform: translateX(20px); }
+      to   { opacity: 1; transform: translateX(0); }
+    }
+
+    .toast-ok { background: #16a34a; color: #fff; }
+    .toast-err { background: #dc2626; color: #fff; }
+    .toast-info { background: var(--accent); color: #fff; }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 900px) {
+      .sidebar { display: none; }
+      .main { margin-left: 0; max-width: 100vw; padding: 20px; }
+      .stats-bar { grid-template-columns: 1fr 1fr; }
+      .form-row { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ── SIDEBAR ── -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <a href="/"><span>Tech</span>Store</a>
+    </div>
+    <div class="sidebar-label">Panel</div>
+    <a href="#" class="sidebar-link active">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      Productos
+    </a>
+    <div class="sidebar-label" style="margin-top:20px">Tienda</div>
+    <a href="/" class="sidebar-link">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      Ver tienda
+    </a>
+    <div class="sidebar-footer">
+      <a href="/">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        Salir al sitio
+      </a>
+    </div>
+  </aside>
+
+  <!-- ── MAIN ── -->
+  <main class="main">
+
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">Gestión de <span>Productos</span></h1>
+        <p class="page-sub">Administra tu catálogo completo de TechStore</p>
+      </div>
+      <button class="btn btn-primary" onclick="abrirModalNuevo()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Nuevo producto
+      </button>
+    </div>
+
+    <!-- STATS -->
+    <div class="stats-bar" id="stats-bar">
+      <div class="stat-card">
+        <div class="stat-card-label">Total productos</div>
+        <div class="stat-card-value accent" id="stat-total">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-label">Valor inventario</div>
+        <div class="stat-card-value" id="stat-valor">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-label">Stock bajo (≤5)</div>
+        <div class="stat-card-value warn" id="stat-bajo">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-label">Total ventas</div>
+        <div class="stat-card-value ok" id="stat-ventas">—</div>
+      </div>
+    </div>
+
+    <!-- TOOLBAR -->
+    <div class="toolbar">
+      <div class="search-wrap">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" id="buscador" placeholder="Buscar por nombre o categoría..." oninput="filtrarTabla()">
+      </div>
+      <button class="btn btn-outline" onclick="cargarProductos()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+        Recargar
+      </button>
+    </div>
+
+    <!-- TABLE -->
+    <div class="table-wrap">
+      <table id="productos-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Foto</th>
+            <th>Nombre</th>
+            <th>Precio</th>
+            <th>Stock</th>
+            <th>Ventas</th>
+            <th>Categoría</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+      <div class="table-placeholder" id="tabla-placeholder">
+        <div class="spinner"></div>
+        Cargando productos...
+      </div>
+    </div>
+
+  </main>
+
+  <!-- ── MODAL PRODUCTO ── -->
+  <div class="modal-overlay" id="modal-overlay" onclick="cerrarModal(event)">
+    <div class="modal" id="modal">
+      <div class="modal-head">
+        <h2 class="modal-title" id="modal-title">Nuevo Producto</h2>
+        <button class="modal-close" onclick="cerrarModalDirecto()">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+
+        <!-- Nombre -->
+        <div class="form-group">
+          <label>Nombre del producto *</label>
+          <input type="text" id="f-nom" placeholder="Ej: Mouse Logitech MX Master 3">
+        </div>
+
+        <!-- Precio / Stock -->
+        <div class="form-row">
+          <div class="form-group">
+            <label>Precio (S/)</label>
+            <input type="number" id="f-pre" placeholder="0.00" min="0" step="0.01">
+          </div>
+          <div class="form-group">
+            <label>Stock (unidades)</label>
+            <input type="number" id="f-stk" placeholder="0" min="0">
+          </div>
+        </div>
+
+        <!-- Ventas / Categoría -->
+        <div class="form-row">
+          <div class="form-group">
+            <label>Ventas registradas</label>
+            <input type="number" id="f-ven" placeholder="0" min="0">
+          </div>
+          <div class="form-group">
+            <label>Categoría</label>
+            <select id="f-cat">
+              <option value="Periféricos">Periféricos</option>
+              <option value="Audio">Audio</option>
+              <option value="Monitores">Monitores</option>
+              <option value="Laptops">Laptops</option>
+              <option value="Tablets">Tablets</option>
+              <option value="Almacenamiento">Almacenamiento</option>
+              <option value="Gaming">Gaming</option>
+              <option value="Accesorios">Accesorios</option>
+              <option value="Mobiliario">Mobiliario</option>
+              <option value="General">General</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Imagen -->
+        <div class="form-group">
+          <label>Imagen del producto</label>
+
+          <!-- Uploader -->
+          <div class="img-uploader" id="img-uploader" ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="dropFile(event)">
+            <input type="file" id="file-input" accept="image/*" onchange="seleccionarArchivo(event)">
+            <div class="img-uploader-icon">📷</div>
+            <p><strong>Haz clic</strong> o arrastra una imagen aquí</p>
+            <p style="margin-top:4px;font-size:11px;color:var(--text-3)">JPG, PNG, WEBP — Máx. 10MB</p>
+          </div>
+
+          <!-- Preview después de seleccionar -->
+          <div class="img-preview-wrap" id="img-preview-wrap" style="display:none; margin-top:10px;">
+            <img class="img-preview-thumb" id="img-preview-thumb" src="" alt="">
+            <div class="img-preview-info">
+              <div class="img-preview-name" id="img-preview-name">archivo.jpg</div>
+              <div class="img-preview-status" id="img-preview-status">Listo para subir</div>
+            </div>
+            <button class="btn btn-outline btn-sm" onclick="limpiarImagen()">✕</button>
+          </div>
+
+          <!-- URL resultante / manual -->
+          <div style="margin-top:10px;">
+            <label style="font-size:11px;color:var(--text-3);font-weight:600;letter-spacing:0.5px;">O pega una URL directamente</label>
+            <input type="text" id="f-img" placeholder="https://..." style="margin-top:6px;width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-size:13px;font-family:'Space Grotesk',sans-serif;outline:none;" oninput="previewDesdeUrl()">
+          </div>
+          <div id="url-display" class="url-display" style="display:none;"></div>
+        </div>
+
+      </div>
+      <div class="modal-foot">
+        <button class="btn btn-outline" onclick="cerrarModalDirecto()">Cancelar</button>
+        <button class="btn btn-primary" id="btn-guardar" onclick="guardarProducto()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          Guardar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── MODAL CONFIRMAR ELIMINAR ── -->
+  <div class="modal-overlay" id="confirm-overlay" onclick="cerrarConfirm(event)">
+    <div class="modal confirm-modal">
+      <div class="modal-head">
+        <h2 class="modal-title">Eliminar producto</h2>
+        <button class="modal-close" onclick="cerrarConfirmDirecto()">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p style="color:var(--text-2);font-size:15px;line-height:1.6;">
+          ¿Estás seguro de que quieres eliminar <strong id="confirm-nombre" style="color:var(--text)"></strong>?
+          <br><span style="color:var(--danger);font-size:13px;">Esta acción no se puede deshacer.</span>
+        </p>
+      </div>
+      <div class="modal-foot">
+        <button class="btn btn-outline" onclick="cerrarConfirmDirecto()">Cancelar</button>
+        <button class="btn btn-danger" id="btn-confirmar-eliminar" onclick="confirmarEliminar()">
+          Sí, eliminar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── TOAST ── -->
+  <div id="toast"></div>
+
+  <script>
+    // =============================================
+    // STATE
+    // =============================================
+    let productos = [];
+    let modoEdicion = false;
+    let editId = null;
+    let eliminarId = null;
+    let archivoSeleccionado = null;
+    let urlSubida = '';
+
+    // =============================================
+    // TOAST
+    // =============================================
+    function toast(msg, tipo = 'ok') {
+      const cont = document.getElementById('toast');
+      const el = document.createElement('div');
+      el.className = `toast-item toast-${tipo}`;
+      el.textContent = msg;
+      cont.appendChild(el);
+      setTimeout(() => el.remove(), 3500);
+    }
+
+    // =============================================
+    // CARGAR PRODUCTOS
+    // =============================================
+    async function cargarProductos() {
+      document.getElementById('tabla-placeholder').style.display = 'flex';
+      document.getElementById('tabla-placeholder').innerHTML = '<div class="spinner"></div><span>Cargando productos...</span>';
+      document.getElementById('tbody').innerHTML = '';
+
+      try {
+        const res = await fetch('/api/admin/productos');
+        productos = await res.json();
+        renderTabla(productos);
+        actualizarStats(productos);
+        document.getElementById('tabla-placeholder').style.display = 'none';
+      } catch (err) {
+        document.getElementById('tabla-placeholder').innerHTML = '⚠️ Error al cargar productos';
+        toast('Error al cargar productos', 'err');
+      }
+    }
+
+    // =============================================
+    // STATS
+    // =============================================
+    function actualizarStats(prods) {
+      document.getElementById('stat-total').textContent = prods.length;
+      const valor = prods.reduce((s, p) => s + parseFloat(p.pre_pro) * parseInt(p.stk_pro), 0);
+      document.getElementById('stat-valor').textContent = 'S/ ' + valor.toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      const bajos = prods.filter(p => parseInt(p.stk_pro) <= 5).length;
+      document.getElementById('stat-bajo').textContent = bajos;
+      const ventas = prods.reduce((s, p) => s + parseInt(p.ventas || 0), 0);
+      document.getElementById('stat-ventas').textContent = ventas.toLocaleString('es-PE');
+    }
+
+    // =============================================
+    // RENDER TABLA
+    // =============================================
+    function renderTabla(prods) {
+      const tbody = document.getElementById('tbody');
+      tbody.innerHTML = '';
+
+      if (!prods.length) {
+        document.getElementById('tabla-placeholder').style.display = 'block';
+        document.getElementById('tabla-placeholder').textContent = 'No hay productos.';
+        return;
+      }
+
+      document.getElementById('tabla-placeholder').style.display = 'none';
+
+      prods.forEach(p => {
+        const stk = parseInt(p.stk_pro);
+        const stockClass = stk > 20 ? 'stock-ok' : stk > 5 ? 'stock-warn' : 'stock-crit';
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td style="color:var(--text-3);font-size:13px">#${p.id_pro}</td>
+          <td>
+            <img class="td-img"
+              src="${p.img_url || 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=200&q=60'}"
+              onerror="this.src='https://images.unsplash.com/photo-1518770660439-4636190af475?w=200&q=60'"
+              alt="${p.nom_pro}">
+          </td>
+          <td class="td-name">${p.nom_pro}</td>
+          <td class="td-price">S/ ${Number(p.pre_pro).toFixed(2)}</td>
+          <td><span class="stock-badge ${stockClass}">${stk} uds.</span></td>
+          <td style="color:var(--text-2)">${p.ventas || 0}</td>
+          <td><span class="cat-badge">${p.categoria || 'General'}</span></td>
+          <td>
+            <div class="actions-cell">
+              <button class="btn btn-outline btn-sm" onclick="abrirModalEditar(${p.id_pro})">
+                ✏️ Editar
+              </button>
+              <button class="btn btn-danger btn-sm" onclick="pedirEliminar(${p.id_pro}, '${p.nom_pro.replace(/'/g, "\\'")}')">
+                🗑️
+              </button>
+            </div>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // =============================================
+    // FILTRO
+    // =============================================
+    function filtrarTabla() {
+      const q = document.getElementById('buscador').value.toLowerCase();
+      const filtrados = productos.filter(p =>
+        p.nom_pro.toLowerCase().includes(q) ||
+        (p.categoria || '').toLowerCase().includes(q)
+      );
+      renderTabla(filtrados);
+    }
+
+    // =============================================
+    // MODAL NUEVO
+    // =============================================
+    function abrirModalNuevo() {
+      modoEdicion = false;
+      editId = null;
+      document.getElementById('modal-title').textContent = 'Nuevo Producto';
+      document.getElementById('btn-guardar').textContent = 'Crear producto';
+      limpiarFormulario();
+      document.getElementById('modal-overlay').classList.add('open');
+    }
+
+    // =============================================
+    // MODAL EDITAR
+    // =============================================
+    function abrirModalEditar(id) {
+      const p = productos.find(x => x.id_pro == id);
+      if (!p) return;
+
+      modoEdicion = true;
+      editId = id;
+      document.getElementById('modal-title').textContent = 'Editar Producto';
+      document.getElementById('btn-guardar').textContent = 'Guardar cambios';
+
+      limpiarFormulario();
+
+      document.getElementById('f-nom').value = p.nom_pro || '';
+      document.getElementById('f-pre').value = p.pre_pro || 0;
+      document.getElementById('f-stk').value = p.stk_pro || 0;
+      document.getElementById('f-ven').value = p.ventas || 0;
+      document.getElementById('f-cat').value = p.categoria || 'General';
+
+      if (p.img_url) {
+        document.getElementById('f-img').value = p.img_url;
+        urlSubida = p.img_url;
+        mostrarUrlDisplay(p.img_url);
+      }
+
+      document.getElementById('modal-overlay').classList.add('open');
+    }
+
+    function limpiarFormulario() {
+      ['f-nom', 'f-pre', 'f-stk', 'f-ven', 'f-img'].forEach(id => {
+        document.getElementById(id).value = '';
+      });
+      document.getElementById('f-cat').value = 'General';
+      limpiarImagen();
+      urlSubida = '';
+    }
+
+    function cerrarModal(e) {
+      if (e.target === document.getElementById('modal-overlay')) cerrarModalDirecto();
+    }
+
+    function cerrarModalDirecto() {
+      document.getElementById('modal-overlay').classList.remove('open');
+    }
+
+    // =============================================
+    // GUARDAR (CREAR / EDITAR)
+    // =============================================
+    async function guardarProducto() {
+      const nom = document.getElementById('f-nom').value.trim();
+      if (!nom) { toast('El nombre es obligatorio', 'err'); return; }
+
+      // Si hay archivo pendiente, subir primero
+      if (archivoSeleccionado) {
+        await subirImagenAhora();
+      }
+
+      const imgUrl = urlSubida || document.getElementById('f-img').value.trim();
+
+      const payload = {
+        nom_pro:   nom,
+        pre_pro:   parseFloat(document.getElementById('f-pre').value) || 0,
+        stk_pro:   parseInt(document.getElementById('f-stk').value) || 0,
+        ventas:    parseInt(document.getElementById('f-ven').value) || 0,
+        categoria: document.getElementById('f-cat').value,
+        img_url:   imgUrl
+      };
+
+      const btn = document.getElementById('btn-guardar');
+      btn.disabled = true;
+      btn.textContent = 'Guardando...';
+
+      try {
+        const url = modoEdicion
+          ? `/api/admin/productos/${editId}`
+          : '/api/admin/productos';
+
+        const res = await fetch(url, {
+          method: modoEdicion ? 'PUT' : 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await res.json();
+
+        if (data.ok) {
+          toast(modoEdicion ? '✅ Producto actualizado' : '✅ Producto creado');
+          cerrarModalDirecto();
+          cargarProductos();
+        } else {
+          toast(data.error || 'Error al guardar', 'err');
+        }
+      } catch (err) {
+        toast('Error de conexión', 'err');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = modoEdicion ? 'Guardar cambios' : 'Crear producto';
+      }
+    }
+
+    // =============================================
+    // ELIMINAR
+    // =============================================
+    function pedirEliminar(id, nombre) {
+      eliminarId = id;
+      document.getElementById('confirm-nombre').textContent = nombre;
+      document.getElementById('confirm-overlay').classList.add('open');
+    }
+
+    function cerrarConfirm(e) {
+      if (e.target === document.getElementById('confirm-overlay')) cerrarConfirmDirecto();
+    }
+
+    function cerrarConfirmDirecto() {
+      document.getElementById('confirm-overlay').classList.remove('open');
+    }
+
+    async function confirmarEliminar() {
+      const btn = document.getElementById('btn-confirmar-eliminar');
+      btn.disabled = true;
+      btn.textContent = 'Eliminando...';
+
+      try {
+        const res = await fetch(`/api/admin/productos/${eliminarId}`, { method: 'DELETE' });
+        const data = await res.json();
+
+        if (data.ok) {
+          toast('🗑️ Producto eliminado');
+          cerrarConfirmDirecto();
+          cargarProductos();
+        } else {
+          toast(data.error || 'Error al eliminar', 'err');
+        }
+      } catch {
+        toast('Error de conexión', 'err');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Sí, eliminar';
+      }
+    }
+
+    // =============================================
+    // CLOUDINARY — SUBIR IMAGEN
+    // =============================================
+    function seleccionarArchivo(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      prepararArchivo(file);
+    }
+
+    function prepararArchivo(file) {
+      if (file.size > 10 * 1024 * 1024) {
+        toast('La imagen supera los 10MB', 'err');
+        return;
+      }
+
+      archivoSeleccionado = file;
+      urlSubida = '';
+
+      // Vista previa local
+      const reader = new FileReader();
+      reader.onload = e => {
+        document.getElementById('img-preview-thumb').src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+
+      document.getElementById('img-preview-name').textContent = file.name;
+      document.getElementById('img-preview-status').textContent = 'Listo para subir al guardar';
+      document.getElementById('img-preview-status').className = 'img-preview-status';
+      document.getElementById('img-preview-wrap').style.display = 'flex';
+      document.getElementById('img-uploader').style.display = 'none';
+      document.getElementById('url-display').style.display = 'none';
+    }
+
+    async function subirImagenAhora() {
+      if (!archivoSeleccionado) return;
+
+      const status = document.getElementById('img-preview-status');
+      status.textContent = '⬆️ Subiendo a Cloudinary...';
+      status.className = 'img-preview-status uploading';
+
+      const formData = new FormData();
+      formData.append('imagen', archivoSeleccionado);
+
+      try {
+        const res = await fetch('/api/admin/upload-imagen', {
+          method: 'POST',
+          body: formData
+        });
+        const data = await res.json();
+
+        if (data.ok) {
+          urlSubida = data.url;
+          document.getElementById('f-img').value = data.url;
+          status.textContent = '✅ Subida exitosa a Cloudinary';
+          status.className = 'img-preview-status done';
+          mostrarUrlDisplay(data.url);
+          archivoSeleccionado = null;
+          toast('📷 Imagen subida correctamente');
+        } else {
+          status.textContent = '❌ Error al subir';
+          status.className = 'img-preview-status error';
+          toast(data.error || 'Error al subir imagen', 'err');
+        }
+      } catch (err) {
+        status.textContent = '❌ Error de conexión';
+        status.className = 'img-preview-status error';
+        toast('Error al conectar con el servidor', 'err');
+      }
+    }
+
+    function limpiarImagen() {
+      archivoSeleccionado = null;
+      urlSubida = '';
+      document.getElementById('file-input').value = '';
+      document.getElementById('img-preview-wrap').style.display = 'none';
+      document.getElementById('img-uploader').style.display = 'block';
+      document.getElementById('url-display').style.display = 'none';
+      document.getElementById('f-img').value = '';
+    }
+
+    function previewDesdeUrl() {
+      const url = document.getElementById('f-img').value.trim();
+      urlSubida = url;
+      if (url) {
+        mostrarUrlDisplay(url);
+        // Limpiar archivo si había
+        archivoSeleccionado = null;
+        document.getElementById('img-preview-wrap').style.display = 'none';
+        document.getElementById('img-uploader').style.display = 'block';
+      } else {
+        document.getElementById('url-display').style.display = 'none';
+      }
+    }
+
+    function mostrarUrlDisplay(url) {
+      const el = document.getElementById('url-display');
+      el.textContent = url;
+      el.style.display = 'block';
+    }
+
+    // Drag & Drop
+    function dragOver(e) {
+      e.preventDefault();
+      document.getElementById('img-uploader').classList.add('drag-over');
+    }
+
+    function dragLeave() {
+      document.getElementById('img-uploader').classList.remove('drag-over');
+    }
+
+    function dropFile(e) {
+      e.preventDefault();
+      document.getElementById('img-uploader').classList.remove('drag-over');
+      const file = e.dataTransfer.files[0];
+      if (file && file.type.startsWith('image/')) {
+        prepararArchivo(file);
+      } else {
+        toast('Solo se permiten imágenes', 'err');
+      }
+    }
+
+    // =============================================
+    // INIT
+    // =============================================
+    cargarProductos();
+  </script>
+</body>
+</html>
