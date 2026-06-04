@@ -420,67 +420,57 @@ def chat():
         if not pregunta:
             return jsonify({"respuesta": "Por favor escribe una pregunta."})
 
-        esquema = (
-            "Tabla productos con columnas: "
-            "id_pro, nom_pro, pre_pro, stk_pro, ventas, categoria, img_url, "
-            "oferta (boolean), pre_oferta (precio con descuento)."
-        )
+        # ── Consultar todos los productos de la BD ──
+        productos = consultar_db("""
+            SELECT nom_pro, pre_pro, stk_pro, ventas, categoria, oferta, pre_oferta
+            FROM productos
+            ORDER BY ventas DESC
+        """)
 
-        datos = None
+        productos_str = ""
+        if productos:
+            lineas = []
+            for p in productos:
+                precio = f"S/{p['pre_pro']}"
+                if p['oferta'] and p['pre_oferta']:
+                    precio += f" (oferta: S/{p['pre_oferta']})"
+                lineas.append(
+                    f"- {p['nom_pro']} | Categoría: {p['categoria']} | "
+                    f"Precio: {precio} | Stock: {p['stk_pro']} uds | Ventas: {p['ventas']}"
+                )
+            productos_str = "\n".join(lineas)
+        else:
+            productos_str = "(sin datos disponibles)"
 
-        # FASE 1 — Clasificar y generar SQL si aplica
+        # ── Una sola llamada a Gemini ──
         try:
-            res_sql = client.models.generate_content(
+            res = client.models.generate_content(
                 model    = "gemini-2.5-flash",
-                contents = f"""
-Analiza el siguiente mensaje:
+                contents = f"""Eres JARVIS, el asistente de voz de TechStore. Tienes acceso al inventario completo actualizado.
 
-{pregunta}
+INVENTARIO ACTUAL:
+{productos_str}
 
-Si es un saludo o conversación normal responde únicamente: CHAT
+PREGUNTA DEL USUARIO: {pregunta}
 
-Si necesita información de la tabla productos:
-{esquema}
-
-Responde únicamente una consulta SQL SELECT válida.
-No agregues explicaciones. No uses markdown. No uses ```sql.
+INSTRUCCIONES:
+- Responde de forma natural, directa y amable en español.
+- Usa los datos del inventario cuando sean relevantes.
+- Si preguntan por stock, precio o ventas, da los datos exactos.
+- Nunca menciones SQL, tablas ni bases de datos.
+- Si es un saludo, responde cordialmente y ofrece ayuda.
+- Respuesta concisa (máximo 3-4 oraciones).
 """
             )
+            return jsonify({"respuesta": res.text.strip()})
 
-            sql_limpio = (
-                res_sql.text.strip()
-                .replace("```sql", "").replace("```", "").replace("`", "").strip()
-                .split(";")[0]
-            )
-
-            if "SELECT" in sql_limpio.upper() and "FROM" in sql_limpio.upper():
-                datos = consultar_db(sql_limpio + ";")
-
-        except Exception:
+        except Exception as e:
+            err_str = str(e)
             traceback.print_exc()
-
-        # FASE 2 — Respuesta humana
-        try:
-            res_final = client.models.generate_content(
-                model    = "gemini-2.5-flash",
-                contents = f"""
-Eres Tech Assistant de TechStore.
-
-Pregunta del usuario: {pregunta}
-
-Datos encontrados: {datos if datos else 'No se requirieron datos'}
-
-Reglas:
-1. Responde de forma natural y amable.
-2. Usa los datos si son relevantes.
-3. Nunca menciones SQL, tablas ni bases de datos.
-4. Responde en español.
-"""
-            )
-            return jsonify({"respuesta": res_final.text.strip()})
-
-        except Exception:
-            traceback.print_exc()
+            if "429" in err_str or "RESOURCE_EXHAUSTED" in err_str:
+                return jsonify({
+                    "respuesta": "Estoy recibiendo muchas consultas en este momento. Por favor espera unos segundos e inténtalo de nuevo."
+                })
             return jsonify({"respuesta": "Ocurrió un problema al generar la respuesta."})
 
     except Exception:
