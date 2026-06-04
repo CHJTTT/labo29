@@ -1045,7 +1045,7 @@
       try {
         const res = await fetch('/api/productos');
         allProducts = await res.json();
-        allProductos = allProducts;   // sincronizar variable del asistente de voz
+        allProductos = allProducts;
 
         document.getElementById('hero-count').textContent = allProducts.length;
         document.getElementById('product-count').textContent = `${allProducts.length} artículos`;
@@ -1392,7 +1392,7 @@
     function closeCart() {
       document.getElementById('cart-drawer').classList.remove('open');
       document.getElementById('cart-overlay').classList.remove('open');
-      stopCartVoice();
+      // No detener Viernes al cerrar el carrito
     }
 
     function showCartToast(msg) {
@@ -1603,10 +1603,15 @@
 
     // ── Abrir/cerrar modal ──
     function toggleVoice() {
-      voiceOpen = !voiceOpen;
-      voiceModal.classList.toggle('open', voiceOpen);
-      voiceBtn.classList.toggle('active', voiceOpen);
-      if (!voiceOpen) desactivarViernes();
+      if (!hasSpeech) { alert('Tu navegador no soporta reconocimiento de voz'); return; }
+      if (modoContinuo) {
+        desactivarViernes();
+        voiceOpen = false;
+        voiceModal.classList.remove('open');
+        voiceBtn.classList.remove('active');
+      } else {
+        activarViernes();
+      }
     }
 
     function closeVoice() {
@@ -1687,32 +1692,21 @@
           desactivarViernes();
           return;
         }
-        // no-speech y otros: volver a escuchar
-        if (modoContinuo && estadoActual !== ESTADO.HABLANDO) {
-          setTimeout(() => escuchar(), 300);
+        // no-speech, aborted u otros: reiniciar siempre si Viernes está activa
+        if (modoContinuo && estadoActual !== ESTADO.HABLANDO && estadoActual !== ESTADO.PROCESANDO) {
+          setTimeout(() => escuchar(), 400);
         }
       };
 
       recognition.onend = () => {
-        if (!finalizado && modoContinuo && estadoActual === ESTADO.ESCUCHANDO) {
+        // Reiniciar siempre que Viernes esté activa, sin importar si el carrito está abierto
+        if (!finalizado && modoContinuo && estadoActual !== ESTADO.HABLANDO && estadoActual !== ESTADO.PROCESANDO) {
           setTimeout(() => escuchar(), 200);
         }
       };
 
       try { recognition.start(); } catch(e) {}
     }
-
-    // ── Mapa de categorías ──
-    const CAT_KEYWORDS = {
-      'Periféricos':    ['periferico','periférico','mouse','ratón','raton','teclado','mousepad','alfombrilla'],
-      'Monitores':      ['monitor','pantalla','display'],
-      'Audio':          ['audio','auricular','auriculares','bocina','bocinas','micrófono','microfono','parlante','sonido'],
-      'Laptops':        ['laptop','portatil','portátil','computadora','notebook','macbook','chromebook'],
-      'Almacenamiento': ['almacenamiento','ssd','disco','pendrive','usb','nas'],
-      'Tablets':        ['tablet','tableta','ipad'],
-      'Gaming':         ['gaming','gamer','juego','videojuego','consola','control','controlador','silla gamer'],
-      'Accesorios':     ['accesorio','accesorios','hub','cargador','soporte','webcam','lámpara','lampara']
-    };
 
     // ── Procesar comando de voz ──
     async function procesarComando(texto) {
@@ -1724,6 +1718,16 @@
       const textoBajo = texto.toLowerCase();
 
       // ── COMANDO: filtrar catálogo por categoría ──
+      const CAT_KEYWORDS = {
+        'Periféricos':    ['periferico','periférico','mouse','ratón','raton','teclado','mousepad','alfombrilla'],
+        'Monitores':      ['monitor','pantalla','display'],
+        'Audio':          ['audio','auricular','auriculares','bocina','bocinas','micrófono','microfono','parlante','sonido'],
+        'Laptops':        ['laptop','portatil','portátil','computadora','notebook','macbook','chromebook'],
+        'Almacenamiento': ['almacenamiento','ssd','disco','pendrive','usb','nas'],
+        'Tablets':        ['tablet','tableta','ipad'],
+        'Gaming':         ['gaming','gamer','juego','videojuego','consola','control','controlador','silla gamer'],
+        'Accesorios':     ['accesorio','accesorios','hub','cargador','soporte','webcam']
+      };
       const esFiltro = /(muéstrame|muestrame|ver|mostrar|filtra|enseñame|enséñame|busca|quiero ver|dame los|dame las)\s+(.+)/.test(textoBajo);
       const esTodos  = /todos|todo el catálogo|todo el catalogo|mostrar todo/.test(textoBajo);
       if (esFiltro || esTodos) {
@@ -1834,13 +1838,10 @@
       const lista = allProductos.length ? allProductos : allProducts;
       if (!texto || !lista.length) return null;
       const t = texto.toLowerCase().trim();
-      // 1. Coincidencia exacta
       let match = lista.find(p => p.nom_pro.toLowerCase() === t);
       if (match) return match;
-      // 2. El nombre completo contiene el texto buscado
       match = lista.find(p => p.nom_pro.toLowerCase().includes(t));
       if (match) return match;
-      // 3. El texto buscado contiene palabras del nombre
       match = lista.find(p => {
         const palabras = p.nom_pro.toLowerCase().split(' ');
         return palabras.some(w => w.length > 3 && t.includes(w));
