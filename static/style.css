@@ -1102,7 +1102,13 @@ footer {
 
 .send-btn:hover { opacity: 0.85; transform: scale(1.05); }
 
-/* ── SCROLLBAR ── */
+/* ── CHAT TOGGLE — mueve a la izquierda del carrito ── */
+#chat-toggle-btn {
+  right: 28px;
+}
+#cart-btn {
+  right: 92px;
+}
 ::-webkit-scrollbar { width: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
