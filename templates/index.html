@@ -512,7 +512,36 @@
       transition: background 0.2s;
     }
     .cart-close-btn:hover { background: rgba(255,255,255,0.12); }
-    to   { box-shadow: 0 0 0 8px rgba(200,255,0,0); }
+
+    .cart-voice-bar {
+      margin: 14px 20px 0;
+      background: rgba(200,255,0,0.06);
+      border: 1px solid rgba(200,255,0,0.18);
+      border-radius: 12px;
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 12px;
+      color: rgba(200,255,0,0.7);
+      flex-shrink: 0;
+    }
+    .cart-voice-icon {
+      width: 28px; height: 28px;
+      background: #c8ff00;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+    .cart-voice-icon:hover { transform: scale(1.1); }
+    .cart-voice-icon.listening {
+      animation: cart-mic-pulse 0.7s ease-in-out infinite alternate;
+    }
+    @keyframes cart-mic-pulse {
+      from { box-shadow: 0 0 0 0 rgba(200,255,0,0.5); }
+      to   { box-shadow: 0 0 0 8px rgba(200,255,0,0); }
     }
 
     .cart-items {
@@ -1016,6 +1045,7 @@
       try {
         const res = await fetch('/api/productos');
         allProducts = await res.json();
+        allProductos = allProducts;   // sincronizar variable del asistente de voz
 
         document.getElementById('hero-count').textContent = allProducts.length;
         document.getElementById('product-count').textContent = `${allProducts.length} artículos`;
@@ -1573,17 +1603,10 @@
 
     // ── Abrir/cerrar modal ──
     function toggleVoice() {
-      if (!hasSpeech) { alert('Tu navegador no soporta reconocimiento de voz'); return; }
-      if (modoContinuo) {
-        // Ya activo: desactivar y cerrar modal
-        desactivarViernes();
-        voiceOpen = false;
-        voiceModal.classList.remove('open');
-        voiceBtn.classList.remove('active');
-      } else {
-        // Activar Viernes directo con un solo click
-        activarViernes();
-      }
+      voiceOpen = !voiceOpen;
+      voiceModal.classList.toggle('open', voiceOpen);
+      voiceBtn.classList.toggle('active', voiceOpen);
+      if (!voiceOpen) desactivarViernes();
     }
 
     function closeVoice() {
@@ -1679,6 +1702,18 @@
       try { recognition.start(); } catch(e) {}
     }
 
+    // ── Mapa de categorías ──
+    const CAT_KEYWORDS = {
+      'Periféricos':    ['periferico','periférico','mouse','ratón','raton','teclado','mousepad','alfombrilla'],
+      'Monitores':      ['monitor','pantalla','display'],
+      'Audio':          ['audio','auricular','auriculares','bocina','bocinas','micrófono','microfono','parlante','sonido'],
+      'Laptops':        ['laptop','portatil','portátil','computadora','notebook','macbook','chromebook'],
+      'Almacenamiento': ['almacenamiento','ssd','disco','pendrive','usb','nas'],
+      'Tablets':        ['tablet','tableta','ipad'],
+      'Gaming':         ['gaming','gamer','juego','videojuego','consola','control','controlador','silla gamer'],
+      'Accesorios':     ['accesorio','accesorios','hub','cargador','soporte','webcam','lámpara','lampara']
+    };
+
     // ── Procesar comando de voz ──
     async function procesarComando(texto) {
       setEstado(ESTADO.PROCESANDO);
@@ -1688,33 +1723,24 @@
 
       const textoBajo = texto.toLowerCase();
 
-      // ── COMANDO: mostrar/filtrar catálogo por categoría ──
-      const CATEGORIA_KEYWORDS = {
-        'Periféricos':    ['periferico','periférico','mouse','ratón','teclado','mousepad','alfombrilla'],
-        'Monitores':      ['monitor','pantalla','display'],
-        'Audio':          ['audio','auricular','auriculares','bocina','bocinas','micrófono','microfono','parlante','sonido'],
-        'Laptops':        ['laptop','portatil','portátil','computadora','notebook','macbook','chromebook'],
-        'Almacenamiento': ['almacenamiento','ssd','disco','pendrive','usb','nas'],
-        'Tablets':        ['tablet','tableta','ipad'],
-        'Gaming':         ['gaming','gamer','juego','videojuego','consola','control','controlador','silla gamer'],
-        'Accesorios':     ['accesorio','accesorios','hub','cargador','soporte','webcam','lámpara','lampara']
-      };
-      const cmdMostrar = textoBajo.match(/(muéstrame|muestrame|ver|mostrar|filtra|enseñame|enséñame|busca|quiero ver)\s+(.+)/);
-      if (cmdMostrar || /todos|todo el catálogo|todo el catalogo/.test(textoBajo)) {
-        if (/todos|todo el catálogo|todo el catalogo/.test(textoBajo)) {
+      // ── COMANDO: filtrar catálogo por categoría ──
+      const esFiltro = /(muéstrame|muestrame|ver|mostrar|filtra|enseñame|enséñame|busca|quiero ver|dame los|dame las)\s+(.+)/.test(textoBajo);
+      const esTodos  = /todos|todo el catálogo|todo el catalogo|mostrar todo/.test(textoBajo);
+      if (esFiltro || esTodos) {
+        if (esTodos) {
           setFilter('Todos');
           document.getElementById('catalogo').scrollIntoView({ behavior: 'smooth' });
-          responderYVolver('Mostrando todos los productos del catálogo.');
+          responderYVolver('Mostrando todo el catálogo.');
           return;
         }
         let catEncontrada = null;
-        for (const [cat, keywords] of Object.entries(CATEGORIA_KEYWORDS)) {
-          if (keywords.some(k => textoBajo.includes(k))) { catEncontrada = cat; break; }
+        for (const [cat, kws] of Object.entries(CAT_KEYWORDS)) {
+          if (kws.some(k => textoBajo.includes(k))) { catEncontrada = cat; break; }
         }
         if (catEncontrada) {
           setFilter(catEncontrada);
           document.getElementById('catalogo').scrollIntoView({ behavior: 'smooth' });
-          responderYVolver('Aquí tienes los ' + catEncontrada + ' disponibles.');
+          responderYVolver('Aquí tienes los ' + catEncontrada + '.');
           return;
         }
       }
@@ -1805,13 +1831,20 @@
     }
 
     function buscarProducto(texto) {
-      if (!texto || !allProductos.length) return null;
-      const t = texto.toLowerCase();
-      // Coincidencia exacta primero
-      let match = allProductos.find(p => p.nom_pro.toLowerCase() === t);
+      const lista = allProductos.length ? allProductos : allProducts;
+      if (!texto || !lista.length) return null;
+      const t = texto.toLowerCase().trim();
+      // 1. Coincidencia exacta
+      let match = lista.find(p => p.nom_pro.toLowerCase() === t);
       if (match) return match;
-      // Coincidencia parcial
-      match = allProductos.find(p => p.nom_pro.toLowerCase().includes(t) || t.includes(p.nom_pro.toLowerCase().split(' ')[0]));
+      // 2. El nombre completo contiene el texto buscado
+      match = lista.find(p => p.nom_pro.toLowerCase().includes(t));
+      if (match) return match;
+      // 3. El texto buscado contiene palabras del nombre
+      match = lista.find(p => {
+        const palabras = p.nom_pro.toLowerCase().split(' ');
+        return palabras.some(w => w.length > 3 && t.includes(w));
+      });
       return match || null;
     }
 
@@ -1914,6 +1947,11 @@
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
       </button>
     </div>
+
+    <div class="cart-voice-bar" id="cart-voice-bar">
+      <div class="cart-voice-icon" id="cart-voice-icon" onclick="toggleCartVoice()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#080808" stroke-width="2.5"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+      </div>
       <span id="cart-voice-hint">Di <em style="color:#f0f0f8">"agrega [producto]"</em> para añadir al carrito</span>
     </div>
 
