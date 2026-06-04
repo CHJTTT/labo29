@@ -632,9 +632,9 @@
   </div>
 
   <!-- ── CHAT ── -->
-  <button id="chat-toggle-btn" onclick="toggleChat()" aria-label="Chat">
-    <svg id="chat-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-    <svg id="chat-close" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="display:none"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+  <button id="chat-toggle-btn" onclick="toggleChat()" aria-label="Chat" style="color:#080808">
+    <svg id="chat-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#080808" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+    <svg id="chat-close" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#080808" stroke-width="2.5" style="display:none"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
     <span class="chat-notif"></span>
   </button>
 
@@ -1214,8 +1214,14 @@
         const data = await res.json();
         const texto = data.respuesta || 'No tengo respuesta.';
 
-        // Mostrar respuesta escrita
-        voiceResponse.textContent = texto;
+        // Mostrar respuesta escrita (limpiar markdown)
+        const textoLimpio = texto
+          .replace(/\*\*(.+?)\*\*/g, '$1')
+          .replace(/\*(.+?)\*/g, '$1')
+          .replace(/[#]/g, '')
+          .replace(/^[\-•]\s*/gm, '• ')
+          .trim();
+        voiceResponse.textContent = textoLimpio;
         voiceResponse.classList.add('show');
 
         // Leer en voz alta
