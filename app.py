@@ -446,7 +446,7 @@ def chat():
         try:
             res = client.models.generate_content(
                 model    = "gemini-2.5-flash",
-                contents = f"""Eres JARVIS, el asistente de voz de TechStore. Tienes acceso al inventario completo actualizado.
+                contents = f"""Eres Viernes, la asistente de voz de TechStore. Tienes acceso al inventario completo actualizado.
 
 INVENTARIO ACTUAL:
 {productos_str}

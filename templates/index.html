@@ -195,8 +195,8 @@
 
     /* Estado hablando */
     #voice-modal.speaking .voice-orb {
-      background: radial-gradient(circle at 35% 35%, #22d3ee, #0e7490);
-      box-shadow: 0 0 50px rgba(34,211,238,0.7), 0 0 100px rgba(34,211,238,0.3);
+      background: radial-gradient(circle at 35% 35%, #c8ff00, #6c9a00);
+      box-shadow: 0 0 50px rgba(200,255,0,0.6), 0 0 100px rgba(200,255,0,0.25);
       animation: orb-speak 0.5s ease-in-out infinite alternate;
     }
 
@@ -239,7 +239,7 @@
     }
 
     #voice-modal.speaking .voice-bars span {
-      background: #22d3ee;
+      background: #c8ff00;
       animation: bar-anim 0.3s ease-in-out infinite alternate;
     }
 
@@ -603,7 +603,7 @@
     <div class="voice-header">
       <div class="voice-brand">
         <span class="voice-dot"></span>
-        JARVIS <span class="voice-sep">✦</span> VOZ
+        VIERNES <span class="voice-sep">✦</span> VOZ
       </div>
       <span class="voice-status-label" id="voice-status-label">Toca el orbe para hablar</span>
       <button class="voice-close" onclick="closeVoice()">✕</button>
@@ -1086,7 +1086,7 @@
     cargarProductos();
 
     // =========================================
-    // ASISTENTE DE VOZ — JARVIS
+    // ASISTENTE DE VOZ — VIERNES
     // =========================================
     const voiceModal   = document.getElementById('voice-modal');
     const voiceOrb     = document.getElementById('voice-orb');
