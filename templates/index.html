@@ -7,6 +7,288 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Bebas+Neue&family=Crimson+Pro:ital,wght@0,300;1,300;1,400&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <style>
+    /* ══════════════════════════════════════
+       BOTÓN DE VOZ
+    ══════════════════════════════════════ */
+    #voice-toggle-btn {
+      position: fixed;
+      bottom: 90px;
+      right: 24px;
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #6c63ff, #9b59f5);
+      border: none;
+      color: #fff;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 20px rgba(108, 99, 255, 0.5);
+      z-index: 1000;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    #voice-toggle-btn:hover {
+      transform: scale(1.1);
+      box-shadow: 0 6px 28px rgba(108, 99, 255, 0.7);
+    }
+
+    #voice-toggle-btn.active {
+      background: linear-gradient(135deg, #a855f7, #6c63ff);
+      box-shadow: 0 0 0 4px rgba(168, 85, 247, 0.3), 0 6px 28px rgba(108,99,255,0.6);
+    }
+
+    /* ══════════════════════════════════════
+       MODAL DE VOZ
+    ══════════════════════════════════════ */
+    #voice-modal {
+      position: fixed;
+      bottom: 155px;
+      right: 24px;
+      width: 320px;
+      background: #0d0d1a;
+      border: 1px solid rgba(108, 99, 255, 0.25);
+      border-radius: 24px;
+      padding: 20px 20px 16px;
+      z-index: 1001;
+      box-shadow: 0 24px 80px rgba(0,0,0,0.7), 0 0 0 1px rgba(108,99,255,0.1);
+      display: none;
+      flex-direction: column;
+      gap: 14px;
+      backdrop-filter: blur(20px);
+    }
+
+    #voice-modal.open { display: flex; }
+
+    /* Header */
+    .voice-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .voice-brand {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      color: #a78bfa;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .voice-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #a78bfa;
+      box-shadow: 0 0 8px #a78bfa;
+      animation: pulse-dot 1.4s ease-in-out infinite;
+    }
+
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    .voice-sep { opacity: 0.4; font-size: 10px; }
+
+    .voice-status-label {
+      flex: 1;
+      text-align: right;
+      font-size: 11px;
+      color: rgba(255,255,255,0.35);
+      font-style: italic;
+    }
+
+    .voice-close {
+      background: none;
+      border: none;
+      color: rgba(255,255,255,0.3);
+      cursor: pointer;
+      font-size: 14px;
+      padding: 2px 4px;
+      border-radius: 6px;
+      transition: color 0.2s;
+      line-height: 1;
+    }
+
+    .voice-close:hover { color: rgba(255,255,255,0.7); }
+
+    /* Orbe */
+    .voice-orb-wrap {
+      position: relative;
+      width: 130px;
+      height: 130px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .voice-orb-ring {
+      position: absolute;
+      border-radius: 50%;
+      border: 1px solid rgba(108, 99, 255, 0.2);
+      animation: ring-pulse 3s ease-in-out infinite;
+    }
+
+    .r1 { width: 130px; height: 130px; animation-delay: 0s; }
+    .r2 { width: 108px; height: 108px; animation-delay: 0.4s; border-color: rgba(108,99,255,0.15); }
+    .r3 { width: 86px; height: 86px; animation-delay: 0.8s; border-color: rgba(108,99,255,0.1); }
+
+    @keyframes ring-pulse {
+      0%, 100% { transform: scale(1); opacity: 0.6; }
+      50% { transform: scale(1.04); opacity: 1; }
+    }
+
+    .voice-orb {
+      width: 70px;
+      height: 70px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 35%, #9b59f5, #4a1d96);
+      box-shadow: 0 0 30px rgba(108,99,255,0.6), 0 0 60px rgba(108,99,255,0.2), inset 0 2px 8px rgba(255,255,255,0.15);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.2s, box-shadow 0.2s;
+      position: relative;
+      z-index: 2;
+    }
+
+    .voice-orb:hover {
+      transform: scale(1.06);
+      box-shadow: 0 0 40px rgba(108,99,255,0.8), 0 0 80px rgba(108,99,255,0.3);
+    }
+
+    .voice-orb-inner {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 40% 30%, rgba(255,255,255,0.4), rgba(255,255,255,0.05));
+    }
+
+    /* Estado escuchando */
+    #voice-modal.listening .voice-orb {
+      animation: orb-listen 0.8s ease-in-out infinite alternate;
+      box-shadow: 0 0 50px rgba(168,85,247,0.9), 0 0 100px rgba(168,85,247,0.4);
+    }
+
+    @keyframes orb-listen {
+      from { transform: scale(1); }
+      to { transform: scale(1.1); }
+    }
+
+    #voice-modal.listening .r1,
+    #voice-modal.listening .r2,
+    #voice-modal.listening .r3 {
+      animation: ring-listen 0.6s ease-in-out infinite alternate;
+    }
+
+    @keyframes ring-listen {
+      from { border-color: rgba(168,85,247,0.3); }
+      to { border-color: rgba(168,85,247,0.7); }
+    }
+
+    /* Estado hablando */
+    #voice-modal.speaking .voice-orb {
+      background: radial-gradient(circle at 35% 35%, #22d3ee, #0e7490);
+      box-shadow: 0 0 50px rgba(34,211,238,0.7), 0 0 100px rgba(34,211,238,0.3);
+      animation: orb-speak 0.5s ease-in-out infinite alternate;
+    }
+
+    @keyframes orb-speak {
+      from { transform: scale(1); }
+      to { transform: scale(1.08); }
+    }
+
+    /* Barras de audio */
+    .voice-bars {
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      gap: 5px;
+      height: 32px;
+    }
+
+    .voice-bars span {
+      width: 4px;
+      border-radius: 4px;
+      background: rgba(108,99,255,0.3);
+      height: 4px;
+      transition: height 0.1s;
+    }
+
+    #voice-modal.listening .voice-bars span {
+      background: #a78bfa;
+      animation: bar-anim 0.6s ease-in-out infinite alternate;
+    }
+
+    #voice-modal.listening .voice-bars span:nth-child(1) { animation-delay: 0.0s; animation-duration: 0.5s; }
+    #voice-modal.listening .voice-bars span:nth-child(2) { animation-delay: 0.1s; animation-duration: 0.7s; }
+    #voice-modal.listening .voice-bars span:nth-child(3) { animation-delay: 0.05s; animation-duration: 0.4s; }
+    #voice-modal.listening .voice-bars span:nth-child(4) { animation-delay: 0.2s; animation-duration: 0.6s; }
+    #voice-modal.listening .voice-bars span:nth-child(5) { animation-delay: 0.15s; animation-duration: 0.55s; }
+
+    @keyframes bar-anim {
+      from { height: 4px; }
+      to { height: 28px; }
+    }
+
+    #voice-modal.speaking .voice-bars span {
+      background: #22d3ee;
+      animation: bar-anim 0.3s ease-in-out infinite alternate;
+    }
+
+    /* Transcript */
+    .voice-transcript {
+      min-height: 32px;
+      font-size: 13px;
+      color: rgba(255,255,255,0.55);
+      text-align: center;
+      font-style: italic;
+      line-height: 1.5;
+      padding: 0 4px;
+    }
+
+    .voice-transcript.has-text {
+      color: #fff;
+      font-style: normal;
+    }
+
+    /* Respuesta */
+    .voice-response {
+      background: rgba(108,99,255,0.08);
+      border: 1px solid rgba(108,99,255,0.15);
+      border-radius: 12px;
+      padding: 10px 14px;
+      font-size: 13px;
+      color: rgba(255,255,255,0.8);
+      line-height: 1.5;
+      display: none;
+      max-height: 110px;
+      overflow-y: auto;
+    }
+
+    .voice-response.show { display: block; }
+
+    .voice-response::-webkit-scrollbar { width: 3px; }
+    .voice-response::-webkit-scrollbar-track { background: transparent; }
+    .voice-response::-webkit-scrollbar-thumb { background: rgba(108,99,255,0.4); border-radius: 2px; }
+
+    /* Footer */
+    .voice-footer {
+      text-align: center;
+      font-size: 11px;
+      color: rgba(255,255,255,0.25);
+      padding-top: 2px;
+    }
+
+    #voice-mode-label { color: rgba(167,139,250,0.6); }
+  </style>
 
   <style>
     /* ── MENÚ DE USUARIO ── */
@@ -311,6 +593,44 @@
     </div>
   </footer>
 
+  <!-- ── ASISTENTE DE VOZ ── -->
+  <button id="voice-toggle-btn" onclick="toggleVoice()" aria-label="Asistente de voz">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+  </button>
+
+  <!-- Modal del asistente de voz -->
+  <div id="voice-modal">
+    <div class="voice-header">
+      <div class="voice-brand">
+        <span class="voice-dot"></span>
+        JARVIS <span class="voice-sep">✦</span> VOZ
+      </div>
+      <span class="voice-status-label" id="voice-status-label">Toca el orbe para hablar</span>
+      <button class="voice-close" onclick="closeVoice()">✕</button>
+    </div>
+
+    <div class="voice-orb-wrap">
+      <div class="voice-orb-ring r1"></div>
+      <div class="voice-orb-ring r2"></div>
+      <div class="voice-orb-ring r3"></div>
+      <div class="voice-orb" id="voice-orb" onclick="handleOrbClick()">
+        <div class="voice-orb-inner"></div>
+      </div>
+    </div>
+
+    <div class="voice-bars" id="voice-bars">
+      <span></span><span></span><span></span><span></span><span></span>
+    </div>
+
+    <div class="voice-transcript" id="voice-transcript"></div>
+
+    <div class="voice-response" id="voice-response"></div>
+
+    <div class="voice-footer">
+      <span id="voice-mode-label">🎙 Voz activa</span>
+    </div>
+  </div>
+
   <!-- ── CHAT ── -->
   <button id="chat-toggle-btn" onclick="toggleChat()" aria-label="Chat">
     <svg id="chat-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
@@ -365,12 +685,6 @@
           // Inicial del nombre para el avatar
           const inicial = data.nombre.charAt(0).toUpperCase();
 
-          const adminLink = data.rol === 'admin'
-            ? '<a class="dropdown-link admin" href="/admin">'
-            + '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>'
-            + ' Panel Admin</a>'
-            : '';
-
           cont.innerHTML = `
             <div class="user-menu" id="user-menu">
               <button class="user-btn" onclick="toggleMenu()">
@@ -382,7 +696,11 @@
               </button>
               <div class="user-dropdown">
                 <div class="dropdown-name">${data.nombre}</div>
-                ${adminLink}
+                ${data.rol === 'admin' ? `
+                <a class="dropdown-link admin" href="/admin">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+                  Panel Admin
+                </a>` : ''}
                 <div class="dropdown-sep"></div>
                 <a class="dropdown-link logout" href="/logout">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
@@ -766,6 +1084,207 @@
     // =========================================
     cargarSesion();
     cargarProductos();
+
+    // =========================================
+    // ASISTENTE DE VOZ — JARVIS
+    // =========================================
+    const voiceModal   = document.getElementById('voice-modal');
+    const voiceOrb     = document.getElementById('voice-orb');
+    const voiceStatus  = document.getElementById('voice-status-label');
+    const voiceTranscript = document.getElementById('voice-transcript');
+    const voiceResponse   = document.getElementById('voice-response');
+    const voiceModeLabel  = document.getElementById('voice-mode-label');
+    const voiceBtn        = document.getElementById('voice-toggle-btn');
+
+    let voiceOpen       = false;
+    let isListening     = false;
+    let isSpeaking      = false;
+    let recognition     = null;
+    let currentUtterance = null;
+
+    // Verificar soporte
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const hasSpeech = !!SpeechRecognition;
+
+    function toggleVoice() {
+      voiceOpen = !voiceOpen;
+      voiceModal.classList.toggle('open', voiceOpen);
+      voiceBtn.classList.toggle('active', voiceOpen);
+      if (!voiceOpen) stopAll();
+    }
+
+    function closeVoice() {
+      voiceOpen = false;
+      voiceModal.classList.remove('open');
+      voiceBtn.classList.remove('active');
+      stopAll();
+    }
+
+    function stopAll() {
+      if (recognition) { try { recognition.stop(); } catch(e) {} }
+      if (window.speechSynthesis) window.speechSynthesis.cancel();
+      isListening = false;
+      isSpeaking  = false;
+      voiceModal.classList.remove('listening', 'speaking');
+      setStatus('Toca el orbe para hablar');
+      voiceModeLabel.textContent = '🎙 Voz activa';
+    }
+
+    function handleOrbClick() {
+      if (!hasSpeech) {
+        setStatus('Tu navegador no soporta reconocimiento de voz');
+        return;
+      }
+      if (isSpeaking) {
+        window.speechSynthesis.cancel();
+        isSpeaking = false;
+        voiceModal.classList.remove('speaking');
+        setStatus('Toca el orbe para hablar');
+        return;
+      }
+      if (isListening) {
+        recognition.stop();
+        return;
+      }
+      startListening();
+    }
+
+    function startListening() {
+      recognition = new SpeechRecognition();
+      recognition.lang = 'es-PE';
+      recognition.interimResults = true;
+      recognition.maxAlternatives = 1;
+
+      recognition.onstart = () => {
+        isListening = true;
+        voiceModal.classList.add('listening');
+        voiceModal.classList.remove('speaking');
+        setStatus('Escuchando...');
+        voiceModeLabel.textContent = '🔴 Escuchando';
+        voiceTranscript.textContent = '';
+        voiceTranscript.classList.remove('has-text');
+        voiceResponse.classList.remove('show');
+      };
+
+      recognition.onresult = (e) => {
+        const texto = Array.from(e.results)
+          .map(r => r[0].transcript).join('');
+        voiceTranscript.textContent = texto;
+        voiceTranscript.classList.add('has-text');
+      };
+
+      recognition.onerror = (e) => {
+        isListening = false;
+        voiceModal.classList.remove('listening');
+        const msgs = {
+          'not-allowed': 'Permiso de micrófono denegado',
+          'no-speech':   'No se detectó voz, intenta de nuevo',
+          'network':     'Error de red'
+        };
+        setStatus(msgs[e.error] || 'Error: ' + e.error);
+        voiceModeLabel.textContent = '🎙 Voz activa';
+      };
+
+      recognition.onend = () => {
+        isListening = false;
+        voiceModal.classList.remove('listening');
+        const textoFinal = voiceTranscript.textContent.trim();
+        if (textoFinal) {
+          enviarVoz(textoFinal);
+        } else {
+          setStatus('No se detectó audio, intenta de nuevo');
+          voiceModeLabel.textContent = '🎙 Voz activa';
+        }
+      };
+
+      recognition.start();
+    }
+
+    async function enviarVoz(pregunta) {
+      setStatus('Procesando...');
+      voiceModeLabel.textContent = '⏳ Pensando';
+      voiceResponse.classList.remove('show');
+
+      try {
+        const res  = await fetch('/chat', {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body:    JSON.stringify({ pregunta })
+        });
+        const data = await res.json();
+        const texto = data.respuesta || 'No tengo respuesta.';
+
+        // Mostrar respuesta escrita
+        voiceResponse.textContent = texto;
+        voiceResponse.classList.add('show');
+
+        // Leer en voz alta
+        hablar(texto);
+
+      } catch (err) {
+        setStatus('Error de conexión');
+        voiceModeLabel.textContent = '🎙 Voz activa';
+      }
+    }
+
+    function hablar(texto) {
+      if (!window.speechSynthesis) return;
+      window.speechSynthesis.cancel();
+
+      // Limpiar markdown para lectura
+      const limpio = texto
+        .replace(/\*\*(.+?)\*\*/g, '$1')
+        .replace(/\*(.+?)\*/g, '$1')
+        .replace(/[#\-•]/g, '')
+        .replace(/\n+/g, '. ')
+        .trim();
+
+      const utterance = new SpeechSynthesisUtterance(limpio);
+      utterance.lang  = 'es-PE';
+      utterance.rate  = 1.05;
+      utterance.pitch = 1.0;
+
+      // Intentar voz en español
+      const voices = window.speechSynthesis.getVoices();
+      const esVoice = voices.find(v => v.lang.startsWith('es') && v.name.toLowerCase().includes('google'))
+                   || voices.find(v => v.lang.startsWith('es'));
+      if (esVoice) utterance.voice = esVoice;
+
+      utterance.onstart = () => {
+        isSpeaking = true;
+        voiceModal.classList.add('speaking');
+        voiceModal.classList.remove('listening');
+        setStatus('Hablando...');
+        voiceModeLabel.textContent = '🔊 Respondiendo';
+      };
+
+      utterance.onend = () => {
+        isSpeaking = false;
+        voiceModal.classList.remove('speaking');
+        setStatus('Toca el orbe para seguir');
+        voiceModeLabel.textContent = '🎙 Voz activa';
+      };
+
+      utterance.onerror = () => {
+        isSpeaking = false;
+        voiceModal.classList.remove('speaking');
+        setStatus('Error al reproducir audio');
+        voiceModeLabel.textContent = '🎙 Voz activa';
+      };
+
+      currentUtterance = utterance;
+      window.speechSynthesis.speak(utterance);
+    }
+
+    function setStatus(msg) {
+      voiceStatus.textContent = msg;
+    }
+
+    // Precargar voces disponibles
+    if (window.speechSynthesis) {
+      window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
+      window.speechSynthesis.getVoices();
+    }
   </script>
 </body>
 </html>
