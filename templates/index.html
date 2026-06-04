@@ -890,7 +890,7 @@
         <span class="voice-dot"></span>
         VIERNES <span class="voice-sep">✦</span> VOZ
       </div>
-      <span class="voice-status-label" id="voice-status-label">Toca el orbe para hablar</span>
+      <span class="voice-status-label" id="voice-status-label">Presiona el orbe para activar</span>
       <button class="voice-close" onclick="closeVoice()">✕</button>
     </div>
 
@@ -912,7 +912,7 @@
     <div class="voice-response" id="voice-response"></div>
 
     <div class="voice-footer">
-      <span id="voice-mode-label">🎙 Voz activa</span>
+      <span id="voice-mode-label">⚪ Inactiva</span>
     </div>
   </div>
 
@@ -1579,207 +1579,313 @@
     cargarProductos();
 
     // =========================================
-    // ASISTENTE DE VOZ — VIERNES
+    // ASISTENTE DE VOZ CONTINUO — VIERNES
     // =========================================
-    const voiceModal   = document.getElementById('voice-modal');
-    const voiceOrb     = document.getElementById('voice-orb');
-    const voiceStatus  = document.getElementById('voice-status-label');
+    const voiceModal      = document.getElementById('voice-modal');
+    const voiceOrb        = document.getElementById('voice-orb');
+    const voiceStatus     = document.getElementById('voice-status-label');
     const voiceTranscript = document.getElementById('voice-transcript');
     const voiceResponse   = document.getElementById('voice-response');
     const voiceModeLabel  = document.getElementById('voice-mode-label');
     const voiceBtn        = document.getElementById('voice-toggle-btn');
 
-    let voiceOpen       = false;
-    let isListening     = false;
-    let isSpeaking      = false;
-    let recognition     = null;
-    let currentUtterance = null;
+    // Estados del asistente
+    const ESTADO = { INACTIVO: 0, ESCUCHANDO: 1, PROCESANDO: 2, HABLANDO: 3 };
+    let estadoActual  = ESTADO.INACTIVO;
+    let voiceOpen     = false;
+    let modoContinuo  = false;   // true = Viernes activa y sigue escuchando sola
+    let recognition   = null;
+    let silenceTimer  = null;
 
-    // Verificar soporte
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     const hasSpeech = !!SpeechRecognition;
 
+    // ── Abrir/cerrar modal ──
     function toggleVoice() {
       voiceOpen = !voiceOpen;
       voiceModal.classList.toggle('open', voiceOpen);
       voiceBtn.classList.toggle('active', voiceOpen);
-      if (!voiceOpen) stopAll();
+      if (!voiceOpen) desactivarViernes();
     }
 
     function closeVoice() {
       voiceOpen = false;
       voiceModal.classList.remove('open');
       voiceBtn.classList.remove('active');
-      stopAll();
+      desactivarViernes();
     }
 
-    function stopAll() {
-      if (recognition) { try { recognition.stop(); } catch(e) {} }
-      if (window.speechSynthesis) window.speechSynthesis.cancel();
-      isListening = false;
-      isSpeaking  = false;
-      voiceModal.classList.remove('listening', 'speaking');
-      setStatus('Toca el orbe para hablar');
-      voiceModeLabel.textContent = '🎙 Voz activa';
-    }
-
+    // ── Activar/desactivar modo continuo (botón del orbe) ──
     function handleOrbClick() {
-      if (!hasSpeech) {
-        setStatus('Tu navegador no soporta reconocimiento de voz');
-        return;
+      if (!hasSpeech) { setStatus('Tu navegador no soporta voz'); return; }
+      if (modoContinuo) {
+        desactivarViernes();
+      } else {
+        activarViernes();
       }
-      if (isSpeaking) {
-        window.speechSynthesis.cancel();
-        isSpeaking = false;
-        voiceModal.classList.remove('speaking');
-        setStatus('Toca el orbe para hablar');
-        return;
-      }
-      if (isListening) {
-        recognition.stop();
-        return;
-      }
-      startListening();
     }
 
-    function startListening() {
+    function activarViernes() {
+      modoContinuo = true;
+      voiceBtn.classList.add('active');
+      voiceModal.classList.add('open');
+      voiceOpen = true;
+      setEstado(ESTADO.ESCUCHANDO);
+      setStatus('Viernes activa — habla cuando quieras');
+      voiceModeLabel.textContent = '🟢 Activa';
+      escuchar();
+    }
+
+    function desactivarViernes() {
+      modoContinuo = false;
+      if (recognition) { try { recognition.abort(); } catch(e) {} recognition = null; }
+      if (window.speechSynthesis) window.speechSynthesis.cancel();
+      clearTimeout(silenceTimer);
+      setEstado(ESTADO.INACTIVO);
+      setStatus('Presiona el orbe para activar');
+      voiceModeLabel.textContent = '⚪ Inactiva';
+      voiceModal.classList.remove('listening', 'speaking');
+    }
+
+    // ── Ciclo de escucha continua ──
+    function escuchar() {
+      if (!modoContinuo) return;
+      if (estadoActual === ESTADO.PROCESANDO || estadoActual === ESTADO.HABLANDO) return;
+
       recognition = new SpeechRecognition();
       recognition.lang = 'es-PE';
       recognition.interimResults = true;
+      recognition.continuous = false;   // fin automático tras silencio
       recognition.maxAlternatives = 1;
 
+      let textoInterim = '';
+      let finalizado   = false;
+
       recognition.onstart = () => {
-        isListening = true;
-        voiceModal.classList.add('listening');
-        voiceModal.classList.remove('speaking');
-        setStatus('Escuchando...');
-        voiceModeLabel.textContent = '🔴 Escuchando';
+        setEstado(ESTADO.ESCUCHANDO);
         voiceTranscript.textContent = '';
         voiceTranscript.classList.remove('has-text');
-        voiceResponse.classList.remove('show');
       };
 
       recognition.onresult = (e) => {
-        const texto = Array.from(e.results)
-          .map(r => r[0].transcript).join('');
-        voiceTranscript.textContent = texto;
+        textoInterim = Array.from(e.results).map(r => r[0].transcript).join('');
+        voiceTranscript.textContent = textoInterim;
         voiceTranscript.classList.add('has-text');
-      };
 
-      recognition.onerror = (e) => {
-        isListening = false;
-        voiceModal.classList.remove('listening');
-        const msgs = {
-          'not-allowed': 'Permiso de micrófono denegado',
-          'no-speech':   'No se detectó voz, intenta de nuevo',
-          'network':     'Error de red'
-        };
-        setStatus(msgs[e.error] || 'Error: ' + e.error);
-        voiceModeLabel.textContent = '🎙 Voz activa';
-      };
-
-      recognition.onend = () => {
-        isListening = false;
-        voiceModal.classList.remove('listening');
-        const textoFinal = voiceTranscript.textContent.trim();
-        if (textoFinal) {
-          enviarVoz(textoFinal);
-        } else {
-          setStatus('No se detectó audio, intenta de nuevo');
-          voiceModeLabel.textContent = '🎙 Voz activa';
+        // Si hay resultado final, procesar
+        if (e.results[e.results.length - 1].isFinal) {
+          finalizado = true;
+          const cmd = textoInterim.trim();
+          if (cmd) procesarComando(cmd);
         }
       };
 
-      recognition.start();
+      recognition.onerror = (e) => {
+        if (e.error === 'not-allowed') {
+          setStatus('Permiso de micrófono denegado');
+          desactivarViernes();
+          return;
+        }
+        // no-speech y otros: volver a escuchar
+        if (modoContinuo && estadoActual !== ESTADO.HABLANDO) {
+          setTimeout(() => escuchar(), 300);
+        }
+      };
+
+      recognition.onend = () => {
+        if (!finalizado && modoContinuo && estadoActual === ESTADO.ESCUCHANDO) {
+          setTimeout(() => escuchar(), 200);
+        }
+      };
+
+      try { recognition.start(); } catch(e) {}
     }
 
-    async function enviarVoz(pregunta) {
-      setStatus('Procesando...');
-      voiceModeLabel.textContent = '⏳ Pensando';
+    // ── Procesar comando de voz ──
+    async function procesarComando(texto) {
+      setEstado(ESTADO.PROCESANDO);
+      voiceModeLabel.textContent = '⏳ Pensando...';
       voiceResponse.classList.remove('show');
+      setStatus('Procesando: "' + texto + '"');
 
+      const textoBajo = texto.toLowerCase();
+
+      // ── COMANDO: abrir carrito ──
+      if (/abre?\s+(el\s+)?carrito|ver\s+carrito|mostrar?\s+carrito/.test(textoBajo)) {
+        openCart();
+        responderYVolver('Aquí está tu carrito.');
+        return;
+      }
+
+      // ── COMANDO: cerrar carrito ──
+      if (/cierra?\s+(el\s+)?carrito|ocultar?\s+carrito/.test(textoBajo)) {
+        closeCart();
+        responderYVolver('Carrito cerrado.');
+        return;
+      }
+
+      // ── COMANDO: vaciar carrito ──
+      if (/vacia?\s+(el\s+)?carrito|limpia?\s+(el\s+)?carrito|elimina?\s+todo/.test(textoBajo)) {
+        cart = [];
+        updateCartUI();
+        responderYVolver('Carrito vaciado.');
+        return;
+      }
+
+      // ── COMANDO: agregar producto ──
+      const cmdAgregar = textoBajo.match(
+        /^(agrega|añade|pon|ponme|quiero|dame|agrégame|añádeme|comprar?|compra|agregar|añadir)\s+(.+)$/
+      );
+      if (cmdAgregar) {
+        const nombreBuscado = cmdAgregar[2]
+          .replace(/al carrito|por favor|porfavor/gi, '').trim();
+        const encontrado = buscarProducto(nombreBuscado);
+        if (encontrado) {
+          addToCart(encontrado);
+          responderYVolver(`Agregué ${encontrado.nom_pro} al carrito.`);
+        } else {
+          // Preguntar a la IA cuál es el más parecido
+          const res = await fetch('/chat', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ pregunta: `¿Cuál producto del inventario es más parecido a "${nombreBuscado}"? Responde solo con el nombre exacto del producto.` })
+          });
+          const data = await res.json();
+          const nombreIA = data.respuesta.replace(/[*#"\n]/g, '').trim().split('.')[0];
+          const matchIA  = buscarProducto(nombreIA);
+          if (matchIA) {
+            addToCart(matchIA);
+            responderYVolver(`No encontré exactamente eso, pero agregué ${matchIA.nom_pro}.`);
+          } else {
+            responderYVolver(`No encontré ningún producto llamado ${nombreBuscado}.`);
+          }
+        }
+        return;
+      }
+
+      // ── COMANDO: eliminar producto del carrito ──
+      const cmdEliminar = textoBajo.match(
+        /^(elimina|quita|borra|saca|remueve)\s+(.+?)(\s+del\s+carrito)?$/
+      );
+      if (cmdEliminar) {
+        const nombreBuscado = cmdEliminar[2].trim();
+        const idx = cart.findIndex(i => i.name.toLowerCase().includes(nombreBuscado));
+        if (idx >= 0) {
+          const nombre = cart[idx].name;
+          cart.splice(idx, 1);
+          updateCartUI();
+          responderYVolver(`Eliminé ${nombre} del carrito.`);
+        } else {
+          responderYVolver(`No encontré ese producto en tu carrito.`);
+        }
+        return;
+      }
+
+      // ── COMANDO GENERAL: pregunta al chat ──
       try {
-        const res  = await fetch('/chat', {
-          method:  'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body:    JSON.stringify({ pregunta })
+        const res = await fetch('/chat', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ pregunta: texto })
         });
         const data = await res.json();
-        const texto = data.respuesta || 'No tengo respuesta.';
-
-        // Mostrar respuesta escrita (limpiar markdown)
-        const textoLimpio = texto
-          .replace(/\*\*(.+?)\*\*/g, '$1')
-          .replace(/\*(.+?)\*/g, '$1')
-          .replace(/[#]/g, '')
-          .replace(/^[\-•]\s*/gm, '• ')
-          .trim();
-        voiceResponse.textContent = textoLimpio;
-        voiceResponse.classList.add('show');
-
-        // Leer en voz alta
-        hablar(texto);
-
-      } catch (err) {
-        setStatus('Error de conexión');
-        voiceModeLabel.textContent = '🎙 Voz activa';
+        const respuesta = data.respuesta || 'No tengo respuesta.';
+        mostrarRespuesta(respuesta);
+        hablar(respuesta);
+      } catch {
+        responderYVolver('Hubo un error de conexión.');
       }
     }
 
-    function hablar(texto) {
-      if (!window.speechSynthesis) return;
-      window.speechSynthesis.cancel();
+    function buscarProducto(texto) {
+      if (!texto || !allProductos.length) return null;
+      const t = texto.toLowerCase();
+      // Coincidencia exacta primero
+      let match = allProductos.find(p => p.nom_pro.toLowerCase() === t);
+      if (match) return match;
+      // Coincidencia parcial
+      match = allProductos.find(p => p.nom_pro.toLowerCase().includes(t) || t.includes(p.nom_pro.toLowerCase().split(' ')[0]));
+      return match || null;
+    }
 
-      // Limpiar markdown para lectura
+    function mostrarRespuesta(texto) {
+      const limpio = texto
+        .replace(/\*\*(.+?)\*\*/g, '$1')
+        .replace(/\*(.+?)\*/g, '$1')
+        .replace(/[#]/g, '')
+        .replace(/^[\-•]\s*/gm, '• ')
+        .trim();
+      voiceResponse.textContent = limpio;
+      voiceResponse.classList.add('show');
+    }
+
+    // Responde en voz y vuelve a escuchar
+    function responderYVolver(texto) {
+      mostrarRespuesta(texto);
+      hablar(texto);
+    }
+
+    function hablar(texto) {
+      if (!window.speechSynthesis) {
+        if (modoContinuo) setTimeout(() => escuchar(), 400);
+        return;
+      }
+      window.speechSynthesis.cancel();
+      setEstado(ESTADO.HABLANDO);
+
       const limpio = texto
         .replace(/\*\*(.+?)\*\*/g, '$1')
         .replace(/\*(.+?)\*/g, '$1')
         .replace(/[#\-•]/g, '')
-        .replace(/\n+/g, '. ')
-        .trim();
+        .replace(/\n+/g, '. ').trim();
 
       const utterance = new SpeechSynthesisUtterance(limpio);
       utterance.lang  = 'es-PE';
       utterance.rate  = 1.05;
       utterance.pitch = 1.0;
 
-      // Intentar voz en español
-      const voices = window.speechSynthesis.getVoices();
+      const voices  = window.speechSynthesis.getVoices();
       const esVoice = voices.find(v => v.lang.startsWith('es') && v.name.toLowerCase().includes('google'))
                    || voices.find(v => v.lang.startsWith('es'));
       if (esVoice) utterance.voice = esVoice;
 
       utterance.onstart = () => {
-        isSpeaking = true;
         voiceModal.classList.add('speaking');
         voiceModal.classList.remove('listening');
-        setStatus('Hablando...');
-        voiceModeLabel.textContent = '🔊 Respondiendo';
+        setStatus('Respondiendo...');
+        voiceModeLabel.textContent = '🔊 Hablando';
       };
 
       utterance.onend = () => {
-        isSpeaking = false;
         voiceModal.classList.remove('speaking');
-        setStatus('Toca el orbe para seguir');
-        voiceModeLabel.textContent = '🎙 Voz activa';
+        if (modoContinuo) {
+          setEstado(ESTADO.ESCUCHANDO);
+          setStatus('Escuchando — habla cuando quieras');
+          voiceModeLabel.textContent = '🟢 Activa';
+          setTimeout(() => escuchar(), 300);
+        } else {
+          setEstado(ESTADO.INACTIVO);
+          setStatus('Presiona el orbe para activar');
+          voiceModeLabel.textContent = '⚪ Inactiva';
+        }
       };
 
       utterance.onerror = () => {
-        isSpeaking = false;
         voiceModal.classList.remove('speaking');
-        setStatus('Error al reproducir audio');
-        voiceModeLabel.textContent = '🎙 Voz activa';
+        if (modoContinuo) setTimeout(() => escuchar(), 400);
       };
 
-      currentUtterance = utterance;
       window.speechSynthesis.speak(utterance);
     }
 
-    function setStatus(msg) {
-      voiceStatus.textContent = msg;
+    function setEstado(e) {
+      estadoActual = e;
+      voiceModal.classList.remove('listening', 'speaking');
+      if (e === ESTADO.ESCUCHANDO) voiceModal.classList.add('listening');
+      if (e === ESTADO.HABLANDO)   voiceModal.classList.add('speaking');
     }
 
-    // Precargar voces disponibles
+    function setStatus(msg) { voiceStatus.textContent = msg; }
+
+    // Precargar voces
     if (window.speechSynthesis) {
       window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
       window.speechSynthesis.getVoices();
