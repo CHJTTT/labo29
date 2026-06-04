@@ -512,36 +512,7 @@
       transition: background 0.2s;
     }
     .cart-close-btn:hover { background: rgba(255,255,255,0.12); }
-
-    .cart-voice-bar {
-      margin: 14px 20px 0;
-      background: rgba(200,255,0,0.06);
-      border: 1px solid rgba(200,255,0,0.18);
-      border-radius: 12px;
-      padding: 10px 14px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      font-size: 12px;
-      color: rgba(200,255,0,0.7);
-      flex-shrink: 0;
-    }
-    .cart-voice-icon {
-      width: 28px; height: 28px;
-      background: #c8ff00;
-      border-radius: 50%;
-      display: flex; align-items: center; justify-content: center;
-      flex-shrink: 0;
-      cursor: pointer;
-      transition: transform 0.2s;
-    }
-    .cart-voice-icon:hover { transform: scale(1.1); }
-    .cart-voice-icon.listening {
-      animation: cart-mic-pulse 0.7s ease-in-out infinite alternate;
-    }
-    @keyframes cart-mic-pulse {
-      from { box-shadow: 0 0 0 0 rgba(200,255,0,0.5); }
-      to   { box-shadow: 0 0 0 8px rgba(200,255,0,0); }
+    to   { box-shadow: 0 0 0 8px rgba(200,255,0,0); }
     }
 
     .cart-items {
@@ -1602,10 +1573,17 @@
 
     // ── Abrir/cerrar modal ──
     function toggleVoice() {
-      voiceOpen = !voiceOpen;
-      voiceModal.classList.toggle('open', voiceOpen);
-      voiceBtn.classList.toggle('active', voiceOpen);
-      if (!voiceOpen) desactivarViernes();
+      if (!hasSpeech) { alert('Tu navegador no soporta reconocimiento de voz'); return; }
+      if (modoContinuo) {
+        // Ya activo: desactivar y cerrar modal
+        desactivarViernes();
+        voiceOpen = false;
+        voiceModal.classList.remove('open');
+        voiceBtn.classList.remove('active');
+      } else {
+        // Activar Viernes directo con un solo click
+        activarViernes();
+      }
     }
 
     function closeVoice() {
@@ -1709,6 +1687,37 @@
       setStatus('Procesando: "' + texto + '"');
 
       const textoBajo = texto.toLowerCase();
+
+      // ── COMANDO: mostrar/filtrar catálogo por categoría ──
+      const CATEGORIA_KEYWORDS = {
+        'Periféricos':    ['periferico','periférico','mouse','ratón','teclado','mousepad','alfombrilla'],
+        'Monitores':      ['monitor','pantalla','display'],
+        'Audio':          ['audio','auricular','auriculares','bocina','bocinas','micrófono','microfono','parlante','sonido'],
+        'Laptops':        ['laptop','portatil','portátil','computadora','notebook','macbook','chromebook'],
+        'Almacenamiento': ['almacenamiento','ssd','disco','pendrive','usb','nas'],
+        'Tablets':        ['tablet','tableta','ipad'],
+        'Gaming':         ['gaming','gamer','juego','videojuego','consola','control','controlador','silla gamer'],
+        'Accesorios':     ['accesorio','accesorios','hub','cargador','soporte','webcam','lámpara','lampara']
+      };
+      const cmdMostrar = textoBajo.match(/(muéstrame|muestrame|ver|mostrar|filtra|enseñame|enséñame|busca|quiero ver)\s+(.+)/);
+      if (cmdMostrar || /todos|todo el catálogo|todo el catalogo/.test(textoBajo)) {
+        if (/todos|todo el catálogo|todo el catalogo/.test(textoBajo)) {
+          setFilter('Todos');
+          document.getElementById('catalogo').scrollIntoView({ behavior: 'smooth' });
+          responderYVolver('Mostrando todos los productos del catálogo.');
+          return;
+        }
+        let catEncontrada = null;
+        for (const [cat, keywords] of Object.entries(CATEGORIA_KEYWORDS)) {
+          if (keywords.some(k => textoBajo.includes(k))) { catEncontrada = cat; break; }
+        }
+        if (catEncontrada) {
+          setFilter(catEncontrada);
+          document.getElementById('catalogo').scrollIntoView({ behavior: 'smooth' });
+          responderYVolver('Aquí tienes los ' + catEncontrada + ' disponibles.');
+          return;
+        }
+      }
 
       // ── COMANDO: abrir carrito ──
       if (/abre?\s+(el\s+)?carrito|ver\s+carrito|mostrar?\s+carrito/.test(textoBajo)) {
@@ -1905,11 +1914,6 @@
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
       </button>
     </div>
-
-    <div class="cart-voice-bar" id="cart-voice-bar">
-      <div class="cart-voice-icon" id="cart-voice-icon" onclick="toggleCartVoice()">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#080808" stroke-width="2.5"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
-      </div>
       <span id="cart-voice-hint">Di <em style="color:#f0f0f8">"agrega [producto]"</em> para añadir al carrito</span>
     </div>
 
