@@ -1701,26 +1701,6 @@
       try { recognition.start(); } catch(e) {}
     }
 
-    // ── Mapa de palabras clave → categorías del catálogo ──
-    const CATEGORIA_KEYWORDS = {
-      'Periféricos':      ['periferico','periférico','mouse','teclado','mousepad','alfombrilla'],
-      'Monitores':        ['monitor','pantalla','display','screen'],
-      'Audio':            ['audio','auricular','auriculares','bocina','bocinas','micrófono','microfono','parlante','speaker','sonido'],
-      'Laptops':          ['laptop','laptopp','portatil','portátil','computadora','notebook','macbook','chromebook'],
-      'Almacenamiento':   ['almacenamiento','ssd','disco','pendrive','usb','nas','storage'],
-      'Tablets':          ['tablet','tableta','ipad'],
-      'Gaming':           ['gaming','gamer','juegos','videojuegos','consola','control','controlador','silla'],
-      'Accesorios':       ['accesorio','accesorios','hub','cargador','soporte','webcam','lámpara','lampara','alfombrilla qi']
-    };
-
-    function detectarCategoria(texto) {
-      const t = texto.toLowerCase();
-      for (const [cat, keywords] of Object.entries(CATEGORIA_KEYWORDS)) {
-        if (keywords.some(k => t.includes(k))) return cat;
-      }
-      return null;
-    }
-
     // ── Procesar comando de voz ──
     async function procesarComando(texto) {
       setEstado(ESTADO.PROCESANDO);
@@ -1730,29 +1710,8 @@
 
       const textoBajo = texto.toLowerCase();
 
-      // ── COMANDO: mostrar/filtrar catálogo por categoría ──
-      const cmdFiltro = textoBajo.match(
-        /(muéstrame|muestrame|ver|mostrar|filtra|enséñame|enseñame|busca|quiero ver)\s+(los?\s+|las?\s+)?(.+)/
-      );
-      if (cmdFiltro) {
-        const catDetectada = detectarCategoria(textoBajo);
-        if (catDetectada) {
-          setFilter(catDetectada);
-          document.getElementById('catalogo').scrollIntoView({ behavior: 'smooth' });
-          responderYVolver('Aquí tienes los ' + catDetectada + ' disponibles.');
-          return;
-        }
-        // Si dice "todos" o "todo el catálogo"
-        if (/todos|todo|catálogo|catalogo/.test(textoBajo)) {
-          setFilter('Todos');
-          document.getElementById('catalogo').scrollIntoView({ behavior: 'smooth' });
-          responderYVolver('Mostrando todos los productos.');
-          return;
-        }
-      }
-
       // ── COMANDO: abrir carrito ──
-      if (/abre?\s+(el\s+)?carrito|ver\s+carrito|mostrar?\s+carrito|mi\s+carrito/.test(textoBajo)) {
+      if (/abre?\s+(el\s+)?carrito|ver\s+carrito|mostrar?\s+carrito/.test(textoBajo)) {
         openCart();
         responderYVolver('Aquí está tu carrito.');
         return;
@@ -1775,7 +1734,7 @@
 
       // ── COMANDO: agregar producto ──
       const cmdAgregar = textoBajo.match(
-        /^(agrega|añade|pon|ponme|quiero|dame|agrégame|añádeme|comprar?|compra|agregar|añadir|mete|méteme)\s+(.+)$/
+        /^(agrega|añade|pon|ponme|quiero|dame|agrégame|añádeme|comprar?|compra|agregar|añadir)\s+(.+)$/
       );
       if (cmdAgregar) {
         const nombreBuscado = cmdAgregar[2]
@@ -1783,27 +1742,21 @@
         const encontrado = buscarProducto(nombreBuscado);
         if (encontrado) {
           addToCart(encontrado);
-          openCart();
-          responderYVolver('Agregué ' + encontrado.nom_pro + ' al carrito.');
+          responderYVolver(`Agregué ${encontrado.nom_pro} al carrito.`);
         } else {
-          try {
-            const res = await fetch('/chat', {
-              method: 'POST', headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ pregunta: '¿Cuál producto del inventario es más parecido a "' + nombreBuscado + '"? Responde solo con el nombre exacto del producto, sin más texto.' })
-            });
-            const data = await res.json();
-            const nombreIA = data.respuesta.replace(/[*#"
-]/g, '').trim().split('.')[0];
-            const matchIA  = buscarProducto(nombreIA);
-            if (matchIA) {
-              addToCart(matchIA);
-              openCart();
-              responderYVolver('No encontré exactamente eso, pero agregué ' + matchIA.nom_pro + '.');
-            } else {
-              responderYVolver('No encontré ningún producto llamado ' + nombreBuscado + '.');
-            }
-          } catch {
-            responderYVolver('No pude buscar el producto, intenta de nuevo.');
+          // Preguntar a la IA cuál es el más parecido
+          const res = await fetch('/chat', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ pregunta: `¿Cuál producto del inventario es más parecido a "${nombreBuscado}"? Responde solo con el nombre exacto del producto.` })
+          });
+          const data = await res.json();
+          const nombreIA = data.respuesta.replace(/[*#"\n]/g, '').trim().split('.')[0];
+          const matchIA  = buscarProducto(nombreIA);
+          if (matchIA) {
+            addToCart(matchIA);
+            responderYVolver(`No encontré exactamente eso, pero agregué ${matchIA.nom_pro}.`);
+          } else {
+            responderYVolver(`No encontré ningún producto llamado ${nombreBuscado}.`);
           }
         }
         return;
@@ -1820,17 +1773,10 @@
           const nombre = cart[idx].name;
           cart.splice(idx, 1);
           updateCartUI();
-          responderYVolver('Eliminé ' + nombre + ' del carrito.');
+          responderYVolver(`Eliminé ${nombre} del carrito.`);
         } else {
-          responderYVolver('No encontré ese producto en tu carrito.');
+          responderYVolver(`No encontré ese producto en tu carrito.`);
         }
-        return;
-      }
-
-      // ── COMANDO: scroll al catálogo ──
-      if (/ir\s+al\s+catálogo|catálogo|ir\s+arriba|inicio/.test(textoBajo)) {
-        document.getElementById('catalogo').scrollIntoView({ behavior: 'smooth' });
-        responderYVolver('Aquí está el catálogo.');
         return;
       }
 
